@@ -1,0 +1,5 @@
+S -> number | S Addop_Term   
+Addop_Term -> Plus Term | Minus Term
+Plus -> + 
+Minus -> -
+Term -> number
