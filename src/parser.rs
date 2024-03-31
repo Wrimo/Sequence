@@ -1,12 +1,72 @@
-use crate::types::{Production, ProductionOption};
+use crate::types::{Production, ProductionOption, Token, TokenType};
 use std::collections::HashSet;
-use std::io::{self, BufRead};
+use std::io::{self, Read};
+use std::{fs, vec};
 
-pub fn get_productions() -> Vec<Production> {
-    let stdin = io::stdin();
+fn symbol_anlysis() -> Option<Vec<Token>> {
+    let mut tokens: Vec<Token> = Vec::new();
+
+    let mut input: String = String::from("");
+    let _ = io::stdin().read_to_string(&mut input);
+    let mut i = 0;
+    let chars: Vec<char> = input.chars().collect();
+
+    while i < chars.len() {
+        let chr = chars[i];
+        let mut token = Token {
+            token_type: TokenType::NONE,
+        };
+
+        if chr == ' ' || chr == '\t' {
+            i += 1;
+            continue;
+        }
+        if chr == '\n' {
+            token.token_type = TokenType::NEWLINE;
+        }
+        if chr == ';' {
+            token.token_type = TokenType::SEMICOLON;
+        } else if chr == '<' && input.chars().nth(i + 1)? == '-' {
+            token.token_type = TokenType::ASSIGNMENT;
+            i += 1;
+        } else if chr == '(' {
+            token.token_type = TokenType::RPAREN;
+        } else if chr == ')' {
+            token.token_type = TokenType::LPAREN;
+        } else if chr.is_alphabetic() {
+            let mut j = i + 1;
+            while j < input.len() && chars[j].is_alphanumeric() {
+                j += 1;
+            }
+            // need to add key word check 
+            token.token_type = TokenType::IDENTIFIER(input[i..j].to_string());
+            i = j - 1;
+        } else if chr.is_numeric() {
+            let mut j = i + 1;
+            while j < input.len() && chars[j].is_numeric() {
+                j += 1;
+            }
+            token.token_type = TokenType::INTEGER(input[i..j].parse().unwrap());
+            i = j - 1;
+        }
+        i += 1;
+        tokens.push(token);
+    }
+    return Some(tokens);
+}
+
+fn get_productions() -> Vec<Production> {
+    // need to convert to using tokens type instead of string
+    let tokens = symbol_anlysis().unwrap();
+
+    for x in tokens {
+        println!("{:?}", x);
+    }
+
     let mut productions: Vec<Production> = Vec::new();
-    for line in stdin.lock().lines() {
-        let line: String = line.unwrap();
+
+    let grammar = fs::read_to_string("../grammar").unwrap();
+    for line in grammar.split("\n") {
         let words: Vec<&str> = line.split_whitespace().collect();
 
         assert!(words.len() >= 3);
@@ -49,9 +109,9 @@ pub fn get_productions() -> Vec<Production> {
 }
 
 #[allow(non_snake_case)]
-pub fn parse(grammar: &Vec<Production>, input: &str) -> bool {
+pub fn parse(input: &str) -> bool {
+    let grammar: Vec<Production> = get_productions();
     let words: Vec<&str> = input.split_whitespace().collect();
-
     let mut M: Vec<Vec<HashSet<String>>> = vec![vec![HashSet::new(); words.len()]; words.len()];
 
     for i in 0..words.len() {

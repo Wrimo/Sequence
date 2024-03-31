@@ -1,5 +1,16 @@
-S -> number | S Addop_Term   
-Addop_Term -> Plus Term | Minus Term
-Plus -> + 
-Minus -> -
-Term -> number
+S -> Statement StatementList
+StatementList -> NEWLINE S | Statetement None 
+Statement ->  PrintState StatementEnd | AssignState StatementEnd 
+
+
+PrintState -> PrintKeyword PrintState2 
+PrintState2 -> RParen PrintState3 
+PrintState3 -> Identifier LParen
+
+
+RParen -> RPAREN 
+LParen -> LPAREN 
+Identifier -> IDENTIFIER
+PrintKeyword -> PRINT
+StatementEnd -> NEWLINE 
+None -> NONE
