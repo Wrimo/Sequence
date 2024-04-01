@@ -1,13 +1,11 @@
-use crate::types::{Production, ProductionOption, Token, TokenType};
+use crate::types::{ConcattedProductions, Production, Token, TokenType};
 use std::collections::HashSet;
-use std::io::{self, Read};
+use std::str::FromStr;
 use std::{fs, vec};
 
-fn symbol_anlysis() -> Option<Vec<Token>> {
+fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
     let mut tokens: Vec<Token> = Vec::new();
 
-    let mut input: String = String::from("");
-    let _ = io::stdin().read_to_string(&mut input);
     let mut i = 0;
     let chars: Vec<char> = input.chars().collect();
 
@@ -33,12 +31,16 @@ fn symbol_anlysis() -> Option<Vec<Token>> {
             token.token_type = TokenType::RPAREN;
         } else if chr == ')' {
             token.token_type = TokenType::LPAREN;
+        } else if chr == '+' {
+            token.token_type = TokenType::ADDOP;
+        } else if chr == '-' {
+            token.token_type = TokenType::SUBOP;
         } else if chr.is_alphabetic() {
             let mut j = i + 1;
             while j < input.len() && chars[j].is_alphanumeric() {
                 j += 1;
             }
-            // need to add key word check 
+            // need to add key word check
             token.token_type = TokenType::IDENTIFIER(input[i..j].to_string());
             i = j - 1;
         } else if chr.is_numeric() {
@@ -52,27 +54,29 @@ fn symbol_anlysis() -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
+    tokens.push(Token {
+        // adding an arbitary NEWLINE lets the grammar assume every statement is followed by a newline
+        token_type: TokenType::NEWLINE,
+    });
     return Some(tokens);
 }
 
 fn get_productions() -> Vec<Production> {
-    // need to convert to using tokens type instead of string
-    let tokens = symbol_anlysis().unwrap();
-
-    for x in tokens {
-        println!("{:?}", x);
-    }
-
     let mut productions: Vec<Production> = Vec::new();
 
-    let grammar = fs::read_to_string("../grammar").unwrap();
+    let grammar = fs::read_to_string("grammar").unwrap();
     for line in grammar.split("\n") {
         let words: Vec<&str> = line.split_whitespace().collect();
 
-        assert!(words.len() >= 3);
+        if words.len() == 0 {
+            // empty line
+            continue;
+        }
+
+        let mut nonterminal: Vec<ConcattedProductions> = Vec::new();
+        let mut temrinal: Vec<TokenType> = Vec::new();
 
         let symbol: &str = words[0];
-        let mut options: Vec<ProductionOption> = Vec::new();
 
         let mut i = 2; // 2 since 0 is the production's symbol and 1 is ->
         while i < words.len() {
@@ -82,25 +86,27 @@ fn get_productions() -> Vec<Production> {
                 b = words[i + 1];
             }
 
-            let mut opt = ProductionOption {
-                production: Some(a.to_string()),
-                production1: None,
-            };
-
             if b == "|" {
-                // this option has only one symbol
+                // non terminal case
+                let token = TokenType::from_str(a).unwrap();
+
+                temrinal.push(token);
                 i += 2;
             } else {
-                opt.production1 = Some(b.to_string());
+                let concatted = ConcattedProductions {
+                    production: a.to_string(),
+                    production1: b.to_string(),
+                };
+
+                nonterminal.push(concatted);
                 i += 3;
             }
-
-            options.push(opt);
         }
 
         let prod: Production = Production {
             symbol: symbol.to_string(),
-            produces: options,
+            nonterminals: nonterminal,
+            terminals: temrinal,
         };
 
         productions.push(prod);
@@ -111,19 +117,27 @@ fn get_productions() -> Vec<Production> {
 #[allow(non_snake_case)]
 pub fn parse(input: &str) -> bool {
     let grammar: Vec<Production> = get_productions();
-    let words: Vec<&str> = input.split_whitespace().collect();
-    let mut M: Vec<Vec<HashSet<String>>> = vec![vec![HashSet::new(); words.len()]; words.len()];
+    let tokens: Vec<Token> = match symbol_anlysis(input) {
+        Some(x) => x,
+        None => return false,
+    };
 
-    for i in 0..words.len() {
+    for x in &tokens {
+        println!("{:?}", x);
+    }
+
+    let mut M: Vec<Vec<HashSet<String>>> = vec![vec![HashSet::new(); tokens.len()]; tokens.len()];
+
+    for i in 0..tokens.len() {
         for r in 0..grammar.len() {
-            if grammar[r].goes_to_terminal(&words[i]) {
+            if grammar[r].goes_to_terminal(&tokens[i]) {
                 M[i][i].insert(grammar[r].symbol.clone());
             }
         }
     }
 
-    for l in 1..(words.len()) {
-        for r in 0..(words.len() - l) {
+    for l in 1..(tokens.len()) {
+        for r in 0..(tokens.len() - l) {
             for t in 0..(l) {
                 let L: HashSet<String> = M[r][r + t].clone();
                 let R: HashSet<String> = M[r + t + 1][r + l].clone();
@@ -131,7 +145,7 @@ pub fn parse(input: &str) -> bool {
                 for b in L.iter() {
                     for c in R.iter() {
                         for prod in grammar.iter() {
-                            if prod.goes_concatted(&b, &c) {
+                            if prod.goes_to_nonterminal(&b, &c) {
                                 M[r][r + l].insert(prod.symbol.clone());
                             }
                         }
@@ -141,5 +155,16 @@ pub fn parse(input: &str) -> bool {
         }
     }
 
-    return M[0][words.len() - 1].contains("S");
+    for i in 0..M.len() {
+        for j in 0..M[i].len() {
+            print!("{{");
+            for x in &M[i][j] {
+                print!("{} ", x);
+            }
+            print!("}}");
+        }
+        println!();
+    }
+
+    return M[0][tokens.len() - 1].contains("S");
 }

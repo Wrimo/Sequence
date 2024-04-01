@@ -4,12 +4,7 @@ use parser::parse;
 
 
 fn main() {
-    let test: &str = "number";
-    let test1: &str = "number + number - number";
-    let test2: &str = "number - number + number - number";
+    let test: &str = "print(a)\nprint(b)";
+    // expand CYK to allow doing A -> B? Would make writing grammar easier, but might break something else. 
     println!("{} -> {}", test, parse(test));
-    println!("\n\n");
-    println!("{} -> {}", test1, parse(test1));
-    println!("\n\n");
-    println!("{} -> {}", test2, parse(test2));
 }
