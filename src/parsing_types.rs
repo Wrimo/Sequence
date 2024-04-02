@@ -1,4 +1,5 @@
 use std::str::FromStr;
+
 #[derive(Debug)]
 pub enum TokenType {
     NONE,
@@ -14,6 +15,28 @@ pub enum TokenType {
     SEMICOLON,
     NEWLINE,
     PRINT,
+}
+#[derive(Debug, PartialEq)]
+pub struct Token {
+    pub token_type: TokenType,
+}
+
+pub struct Production {
+    pub symbol: String,
+    pub terminals: Vec<TokenType>,
+    pub nonterminals: Vec<ConcattedProductions>,
+}
+
+pub struct ConcattedProductions {
+    pub production: String,
+    pub production1: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+pub struct CYKEntry {
+    pub symbol: String, 
+    pub prev: Option<(usize, usize)>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
+    pub prev1: Option<(usize, usize)>,
 }
 
 impl FromStr for TokenType {
@@ -46,22 +69,6 @@ impl PartialEq for TokenType {
     fn ne(&self, other: &Self) -> bool {
         std::mem::discriminant(self) != std::mem::discriminant(other)
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Token {
-    pub token_type: TokenType,
-}
-
-pub struct Production {
-    pub symbol: String,
-    pub terminals: Vec<TokenType>,
-    pub nonterminals: Vec<ConcattedProductions>,
-}
-
-pub struct ConcattedProductions {
-    pub production: String,
-    pub production1: String,
 }
 
 impl Production {

@@ -1,4 +1,4 @@
-use crate::types::{ConcattedProductions, Production, Token, TokenType};
+use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::{fs, vec};
@@ -126,12 +126,17 @@ pub fn parse(input: &str) -> bool {
         println!("{:?}", x);
     }
 
-    let mut M: Vec<Vec<HashSet<String>>> = vec![vec![HashSet::new(); tokens.len()]; tokens.len()];
+    let mut M: Vec<Vec<HashSet<CYKEntry>>> = vec![vec![HashSet::new(); tokens.len()]; tokens.len()];
 
     for i in 0..tokens.len() {
         for r in 0..grammar.len() {
             if grammar[r].goes_to_terminal(&tokens[i]) {
-                M[i][i].insert(grammar[r].symbol.clone());
+                let ent = CYKEntry {
+                    symbol: grammar[r].symbol.clone(),
+                    prev: None,
+                    prev1: None,
+                };
+                M[i][i].insert(ent);
             }
         }
     }
@@ -139,14 +144,20 @@ pub fn parse(input: &str) -> bool {
     for l in 1..(tokens.len()) {
         for r in 0..(tokens.len() - l) {
             for t in 0..(l) {
-                let L: HashSet<String> = M[r][r + t].clone();
-                let R: HashSet<String> = M[r + t + 1][r + l].clone();
+                let L: HashSet<CYKEntry> = M[r][r + t].clone();
+                let R: HashSet<CYKEntry> = M[r + t + 1][r + l].clone();
 
                 for b in L.iter() {
                     for c in R.iter() {
                         for prod in grammar.iter() {
-                            if prod.goes_to_nonterminal(&b, &c) {
-                                M[r][r + l].insert(prod.symbol.clone());
+                            if prod.goes_to_nonterminal(&b.symbol, &c.symbol) {
+                                let ent = CYKEntry {
+                                    symbol: prod.symbol.clone(),
+                                    prev: Some((r, r + t)),
+                                    prev1: Some((r + t + 1, r + l)),
+                                };
+
+                                M[r][r + l].insert(ent);
                             }
                         }
                     }
@@ -159,12 +170,38 @@ pub fn parse(input: &str) -> bool {
         for j in 0..M[i].len() {
             print!("{{");
             for x in &M[i][j] {
-                print!("{} ", x);
+                print!("{} ", x.symbol);
             }
             print!("}}");
         }
         println!();
     }
 
-    return M[0][tokens.len() - 1].contains("S");
+    for ent in &M[0][tokens.len() - 1] {
+        if ent.symbol == "S" {
+            let i = ent.prev.unwrap();
+            let j = ent.prev1.unwrap();
+            println!("S: {:?} {:?}", i, j);
+            show_parse_tree(&M, i);
+            show_parse_tree(&M, j);
+            return true;
+        }
+    }
+    return false;
+}
+
+fn show_parse_tree(M: &Vec<Vec<HashSet<CYKEntry>>>, index: (usize, usize)) {
+    for x in &M[index.0][index.1] {
+        if x.symbol == "S" { // we only care about the S entry at the start point 
+            continue;        // other entries only exist since S must repeat some productions due to Chomsky Normal Form constraints
+        }
+        match (x.prev, x.prev1) {
+            (Some(i), Some(j)) => {
+                println!("{} @ {:?}: {:?} {:?}", x.symbol, index, i, j);
+                show_parse_tree(M, i);
+                show_parse_tree(M, j);
+            }
+            _ => println!("{}", x.symbol), // temrinal
+        }
+    }
 }

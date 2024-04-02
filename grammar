@@ -1,9 +1,13 @@
 S -> NEWLINE | S Statement | PrintState StatementEnd | AssignState StatementEnd
 
 Statement -> PrintState StatementEnd | AssignState StatementEnd 
+
 PrintState -> Identifier PrintState2 
 PrintState2 -> RParen PrintState3 
 PrintState3 -> Identifier LParen
+
+AssignState -> Identifier AssignState2 
+AssignState2 -> Assign Int
 
 
 RParen -> RPAREN 
@@ -11,4 +15,6 @@ LParen -> LPAREN
 Identifier -> IDENTIFIER
 PrintKeyword -> PRINT
 StatementEnd -> NEWLINE 
+Assign -> ASSIGNMENT
+Int -> INTEGER
 None -> NONE
