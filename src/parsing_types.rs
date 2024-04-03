@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     NONE,
     IDENTIFIER(String),
@@ -16,7 +16,7 @@ pub enum TokenType {
     NEWLINE,
     PRINT,
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
 }
@@ -32,11 +32,12 @@ pub struct ConcattedProductions {
     pub production1: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone)]
 pub struct CYKEntry {
-    pub symbol: String, 
+    pub symbol: String,
     pub prev: Option<(usize, usize)>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
     pub prev1: Option<(usize, usize)>,
+    pub token: Token
 }
 
 impl FromStr for TokenType {

@@ -1,8 +1,9 @@
-S -> NEWLINE | S Statement | PrintState StatementEnd | AssignState StatementEnd
+S -> NEWLINE | Statement StatementList | PrintState StatementEnd | AssignState StatementEnd
 
+StatementList -> Statement StatementList | NEWLINE
 Statement -> PrintState StatementEnd | AssignState StatementEnd 
 
-PrintState -> Identifier PrintState2 
+PrintState -> PrintKeyword PrintState2 
 PrintState2 -> RParen PrintState3 
 PrintState3 -> Identifier LParen
 

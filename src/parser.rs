@@ -1,7 +1,13 @@
 use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
-use std::collections::HashSet;
 use std::str::FromStr;
 use std::{fs, vec};
+
+fn keyword_check(word: &str) -> Option<TokenType> {
+    match word.to_ascii_uppercase().as_str() {
+        "PRINT" => Some(TokenType::PRINT),
+        _ => None,
+    }
+}
 
 fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -36,13 +42,19 @@ fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
         } else if chr == '-' {
             token.token_type = TokenType::SUBOP;
         } else if chr.is_alphabetic() {
-            let mut j = i + 1;
-            while j < input.len() && chars[j].is_alphanumeric() {
+            let mut j = i;
+            while j < input.len() - 1 && chars[j + 1].is_alphanumeric() {
                 j += 1;
+                if let Some(x) = keyword_check(&input[i..j + 1]) {
+                    token.token_type = x;
+                }
             }
-            // need to add key word check
-            token.token_type = TokenType::IDENTIFIER(input[i..j].to_string());
-            i = j - 1;
+
+            if token.token_type == TokenType::NONE {
+                token.token_type = TokenType::IDENTIFIER(input[i..j + 1].to_string());
+            }
+
+            i = j;
         } else if chr.is_numeric() {
             let mut j = i + 1;
             while j < input.len() && chars[j].is_numeric() {
@@ -54,6 +66,10 @@ fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
+    tokens.push(Token {
+        // adding an arbitary NEWLINE lets the grammar assume every statement is followed by a newline
+        token_type: TokenType::NEWLINE,
+    });
     tokens.push(Token {
         // adding an arbitary NEWLINE lets the grammar assume every statement is followed by a newline
         token_type: TokenType::NEWLINE,
@@ -114,19 +130,16 @@ fn get_productions() -> Vec<Production> {
     return productions;
 }
 
+type ParseError = ();
 #[allow(non_snake_case)]
-pub fn parse(input: &str) -> bool {
+pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
     let grammar: Vec<Production> = get_productions();
     let tokens: Vec<Token> = match symbol_anlysis(input) {
         Some(x) => x,
-        None => return false,
+        None => return Err(()),
     };
 
-    for x in &tokens {
-        println!("{:?}", x);
-    }
-
-    let mut M: Vec<Vec<HashSet<CYKEntry>>> = vec![vec![HashSet::new(); tokens.len()]; tokens.len()];
+    let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
 
     for i in 0..tokens.len() {
         for r in 0..grammar.len() {
@@ -135,8 +148,9 @@ pub fn parse(input: &str) -> bool {
                     symbol: grammar[r].symbol.clone(),
                     prev: None,
                     prev1: None,
+                    token: tokens[i].clone(), // there's a potential error since tokens gets associated with productions that could go to then, not ones of do. what if two terminals from one terminal?
                 };
-                M[i][i].insert(ent);
+                M[i][i].push(ent);
             }
         }
     }
@@ -144,8 +158,8 @@ pub fn parse(input: &str) -> bool {
     for l in 1..(tokens.len()) {
         for r in 0..(tokens.len() - l) {
             for t in 0..(l) {
-                let L: HashSet<CYKEntry> = M[r][r + t].clone();
-                let R: HashSet<CYKEntry> = M[r + t + 1][r + l].clone();
+                let L: Vec<CYKEntry> = M[r][r + t].clone();
+                let R: Vec<CYKEntry> = M[r + t + 1][r + l].clone();
 
                 for b in L.iter() {
                     for c in R.iter() {
@@ -155,9 +169,12 @@ pub fn parse(input: &str) -> bool {
                                     symbol: prod.symbol.clone(),
                                     prev: Some((r, r + t)),
                                     prev1: Some((r + t + 1, r + l)),
+                                    token: Token {
+                                        token_type: TokenType::NONE,
+                                    },
                                 };
 
-                                M[r][r + l].insert(ent);
+                                M[r][r + l].push(ent);
                             }
                         }
                     }
@@ -166,42 +183,10 @@ pub fn parse(input: &str) -> bool {
         }
     }
 
-    for i in 0..M.len() {
-        for j in 0..M[i].len() {
-            print!("{{");
-            for x in &M[i][j] {
-                print!("{} ", x.symbol);
-            }
-            print!("}}");
-        }
-        println!();
-    }
-
     for ent in &M[0][tokens.len() - 1] {
         if ent.symbol == "S" {
-            let i = ent.prev.unwrap();
-            let j = ent.prev1.unwrap();
-            println!("S: {:?} {:?}", i, j);
-            show_parse_tree(&M, i);
-            show_parse_tree(&M, j);
-            return true;
+            return Ok(M);
         }
     }
-    return false;
-}
-
-fn show_parse_tree(M: &Vec<Vec<HashSet<CYKEntry>>>, index: (usize, usize)) {
-    for x in &M[index.0][index.1] {
-        if x.symbol == "S" { // we only care about the S entry at the start point 
-            continue;        // other entries only exist since S must repeat some productions due to Chomsky Normal Form constraints
-        }
-        match (x.prev, x.prev1) {
-            (Some(i), Some(j)) => {
-                println!("{} @ {:?}: {:?} {:?}", x.symbol, index, i, j);
-                show_parse_tree(M, i);
-                show_parse_tree(M, j);
-            }
-            _ => println!("{}", x.symbol), // temrinal
-        }
-    }
+    return Err(());
 }
