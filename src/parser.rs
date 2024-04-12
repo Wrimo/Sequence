@@ -9,7 +9,7 @@ fn keyword_check(word: &str) -> Option<TokenType> {
     }
 }
 
-fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
+fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     let mut tokens: Vec<Token> = Vec::new();
 
     let mut i = 0;
@@ -25,6 +25,7 @@ fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
             i += 1;
             continue;
         }
+        // would be nice to replace all the operators/keywords with a lookup table
         if chr == '\n' {
             token.token_type = TokenType::NEWLINE;
         }
@@ -41,6 +42,10 @@ fn symbol_anlysis(input: &str) -> Option<Vec<Token>> {
             token.token_type = TokenType::ADDOP;
         } else if chr == '-' {
             token.token_type = TokenType::SUBOP;
+        } else if chr == '*' {
+            token.token_type = TokenType::MULOP;
+        } else if chr == '/' {
+            token.token_type = TokenType::DIVOP;
         } else if chr.is_alphabetic() {
             let mut j = i;
             while j < input.len() - 1 && chars[j + 1].is_alphanumeric() {
@@ -84,7 +89,7 @@ fn get_productions() -> Vec<Production> {
     for line in grammar.split("\n") {
         let words: Vec<&str> = line.split_whitespace().collect();
 
-        if words.len() == 0 {
+        if words.len() == 0 || words[0].chars().nth(0) == Some('#') {
             // empty line
             continue;
         }
@@ -104,7 +109,13 @@ fn get_productions() -> Vec<Production> {
 
             if b == "|" {
                 // non terminal case
-                let token = TokenType::from_str(a).unwrap();
+                let token = match TokenType::from_str(a) {
+                    Ok(x) => x,
+                    _ => {
+                        println!("undefined symbol {}", a);
+                        return productions;
+                    } // need to change get_productions to support error. guess i need a more general error pass
+                };
 
                 temrinal.push(token);
                 i += 2;
@@ -134,11 +145,15 @@ type ParseError = ();
 #[allow(non_snake_case)]
 pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
     let grammar: Vec<Production> = get_productions();
-    let tokens: Vec<Token> = match symbol_anlysis(input) {
+    let tokens: Vec<Token> = match symbol_analysis(input) {
         Some(x) => x,
         None => return Err(()),
     };
 
+    for x in &tokens {
+        println!("{:?}", x);
+    }
+    
     let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
 
     for i in 0..tokens.len() {
@@ -182,7 +197,16 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
             }
         }
     }
-
+    for i in 0..M.len() {
+        for j in 0..M[i].len() {
+            print!("{{");
+            for x in &M[i][j] {
+                print!("{} ", x.symbol);
+            }
+            print!("}}");
+        }
+        println!();
+    }
     for ent in &M[0][tokens.len() - 1] {
         if ent.symbol == "S" {
             return Ok(M);

@@ -1,5 +1,6 @@
 S -> NEWLINE | Statement StatementList | PrintState StatementEnd | AssignState StatementEnd
 
+# statement level constructions
 StatementList -> Statement StatementList | NEWLINE
 Statement -> PrintState StatementEnd | AssignState StatementEnd 
 
@@ -8,9 +9,21 @@ PrintState2 -> RParen PrintState3
 PrintState3 -> Identifier LParen
 
 AssignState -> Identifier AssignState2 
-AssignState2 -> Assign Int
+AssignState2 -> Assign Expr
+
+# grammar for expressions 
+Expr -> INTEGER | IDENTIFIER | Expr AddOp_Term | Term MulOp_Factor
+Term -> INTEGER  | IDENTIFIER | Term MulOp_factor 
+Factor -> INTEGER | IDENTIFIER
+
+MulOp_Factor -> MulOp Factor
+AddOp_Term -> AddOp Term 
+
+MulOp -> MULOP | DIVOP
+AddOp -> ADDOP | SUBOP
 
 
+# simple nonterminals to encode terminals (allows them to be concatted)
 RParen -> RPAREN 
 LParen -> LPAREN 
 Identifier -> IDENTIFIER

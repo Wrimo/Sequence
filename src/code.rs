@@ -79,6 +79,7 @@ pub fn run_program(input: &str) {
             return;
         }
     };
+    println!("Parsing succeeded!");
 
     let mut program: Vec<Statement> = Vec::new();
     for ent in &m[0][m.len() - 1] {

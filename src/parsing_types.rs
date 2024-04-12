@@ -10,6 +10,8 @@ pub enum TokenType {
     FLOAT(f32),
     ADDOP,
     SUBOP,
+    MULOP,
+    DIVOP, 
     RPAREN,
     LPAREN,
     SEMICOLON,
@@ -52,12 +54,14 @@ impl FromStr for TokenType {
             "FLOAT" => Ok(TokenType::FLOAT(0.0)),
             "ADDOP" => Ok(TokenType::ADDOP),
             "SUBOP" => Ok(TokenType::SUBOP),
+            "MULOP" => Ok(TokenType::MULOP), 
+            "DIVOP" => Ok(TokenType::DIVOP),
             "RPAREN" => Ok(TokenType::RPAREN),
             "LPAREN" => Ok(TokenType::LPAREN),
             "SEMICOLON" => Ok(TokenType::SEMICOLON),
             "NEWLINE" => Ok(TokenType::NEWLINE),
             "PRINT" => Ok(TokenType::PRINT),
-            _ => Err(()),
+            _ => {return Err(())},
         }
     }
 }
