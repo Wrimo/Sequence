@@ -11,6 +11,10 @@ fn generate_abstract_syntax(
     index: (usize, usize),
 ) {
     for x in &m[index.0][index.1] {
+        if x.symbol == "S" {
+            // we only care about the S entry at the start point
+            continue; // other entries only exist since S must repeat some productions due to Chomsky Normal Form constraints
+        }
         match (x.prev, x.prev1) {
             (Some(i), Some(j)) => {
                 match x.symbol.as_str() {
@@ -24,8 +28,6 @@ fn generate_abstract_syntax(
                         statement.statement_type = StatementType::PRINT;
                     }
                     "Expr" => {
-                        // probably should split expression parsing into a differnet function
-
                         statement.expr = Some(generate_expression(m, index));
                         return;
                     }
@@ -64,12 +66,17 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
             (Some(i), Some(j)) => {
                 let mut r: Box<Expression> = rc_generate_expression(m, i);
                 let mut l: Box<Expression> = rc_generate_expression(m, j);
-                
+
                 // if the right returned an operator, we want to it return it as the result for this node
                 // with the the left to left
 
-                match *l { // check left first because grammar expands to left (Expr AddOp_Term)
-                    Expression::ADD(ref mut x, ref _y) | Expression::SUB(ref mut x, ref _y) => {
+                match *l {
+                    // check left first because grammar expands to left (Expr AddOp_Term)
+                    Expression::ADD(ref mut x, ref _y)
+                    | Expression::SUB(ref mut x, ref _y)
+                    | Expression::MUL(ref mut x, ref _y)
+                    | Expression::DIV(ref mut x, ref _y) 
+                    | Expression::MOD(ref mut x, ref _y) => {
                         *x = r;
                         return l;
                     }
@@ -77,13 +84,16 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
                 }
 
                 match *r {
-                    Expression::ADD(ref _x, ref mut y) | Expression::SUB(ref _x, ref mut y) => {
-                        *y = l; 
+                    Expression::ADD(ref _x, ref mut y)
+                    | Expression::SUB(ref _x, ref mut y)
+                    | Expression::MUL(ref _x, ref mut y)
+                    | Expression::DIV(ref _x, ref mut y) 
+                    | Expression::MOD(ref _x, ref mut y)=> {
+                        *y = l;
                         return r;
                     }
                     _ => {}
                 }
-
             }
             _ => {
                 match &x.token.token_type {
@@ -92,75 +102,77 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
 
                     TokenType::ADDOP => return Box::new(Expression::ADD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                     TokenType::SUBOP => return Box::new(Expression::SUB(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                    TokenType::MULOP => return Box::new(Expression::MUL(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                    TokenType::DIVOP => return Box::new(Expression::DIV(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                    TokenType::MODOP => return Box::new(Expression::MOD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                     _ => {}
                 };
             }
         }
-
     }
     return Box::new(Expression::NONE);
 }
 
-    fn execute_program(program: &Vec<Statement>) {
-        let mut memory: HashMap<&str, i32> = HashMap::new();
+fn execute_program(program: &Vec<Statement>) {
+    let mut memory: HashMap<&str, i32> = HashMap::new();
 
-        for statement in program {
-            println!("{:?}", statement);
-            match statement.statement_type {
-                StatementType::ASSIGN => {
-                    let val = calculate_expression(statement.expr.clone().unwrap());
-                    memory
-                        .entry(statement.var_name.as_ref().unwrap())
-                        .and_modify(|x| *x = val)
-                        .or_insert(val);
-                }
-                StatementType::PRINT => {
-                    println!("{}", memory.entry(statement.var_name.as_ref().unwrap()).or_insert(0));
-                }
-
-                _ => {}
+    for statement in program {
+        println!("{:?}", statement);
+        match statement.statement_type {
+            StatementType::ASSIGN => {
+                let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                memory
+                    .entry(statement.var_name.as_ref().unwrap())
+                    .and_modify(|x| *x = val)
+                    .or_insert(val);
             }
+            StatementType::PRINT => {
+                println!("{}", memory.entry(statement.var_name.as_ref().unwrap()).or_insert(0));
+            }
+
+            _ => {}
         }
     }
+}
 
-    fn calculate_expression(expr: Box<Expression>) -> i32 {
-        match *expr {
-            Expression::ADD(x, y) => calculate_expression(x) + calculate_expression(y),
-            Expression::SUB(x, y) => calculate_expression(x) - calculate_expression(y),
-            Expression::MULT(x, y) => calculate_expression(x) * calculate_expression(y),
-            Expression::DIV(x, y) => calculate_expression(x) / calculate_expression(y),
+fn calculate_expression(expr: Box<Expression>, memory: &HashMap<&str, i32>) -> i32 {
+    match *expr {
+        Expression::ADD(x, y) => calculate_expression(x, memory) + calculate_expression(y, memory),
+        Expression::SUB(x, y) => calculate_expression(x, memory) - calculate_expression(y, memory),
+        Expression::MUL(x, y) => calculate_expression(x, memory) * calculate_expression(y, memory),
+        Expression::DIV(x, y) => calculate_expression(x, memory) / calculate_expression(y, memory),
+        Expression::MOD(x, y) => calculate_expression(x, memory) % calculate_expression(y, memory),
 
-            Expression::INTEGER(x) => x,
-            Expression::IDENTIFIER(_s) => todo!(),
+        Expression::INTEGER(x) => x,
+        Expression::IDENTIFIER(s) => *memory.get(&*s).unwrap(),
 
-            Expression::NONE => 0,
+        Expression::NONE => 0,
+    }
+}
+
+pub fn run_program(input: &str) {
+    let m = match parse(input) {
+        Ok(x) => x,
+        Err(()) => {
+            println!("Parsing failed!");
+            return;
+        }
+    };
+    println!("Parsing succeeded!");
+
+    let mut program: Vec<Statement> = Vec::new();
+    for ent in &m[0][m.len() - 1] {
+        if ent.symbol == "S" {
+            let mut statement: Statement = Statement {
+                statement_type: StatementType::NONE,
+                var_name: None,
+                expr: None,
+            };
+
+            generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev.unwrap());
+            generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev1.unwrap());
+            break;
         }
     }
-
-    pub fn run_program(input: &str) {
-        let m = match parse(input) {
-            Ok(x) => x,
-            Err(()) => {
-                println!("Parsing failed!");
-                return;
-            }
-        };
-        println!("Parsing succeeded!");
-
-        let mut program: Vec<Statement> = Vec::new();
-        for ent in &m[0][m.len() - 1] {
-            if ent.symbol == "S" {
-                let mut statement: Statement = Statement {
-                    statement_type: StatementType::NONE,
-                    var_name: None,
-                    expr: None,
-                };
-
-                generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev.unwrap());
-                generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev1.unwrap());
-                break;
-            }
-        }
-        execute_program(&program);
-    }
-
+    execute_program(&program);
+}

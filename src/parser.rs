@@ -44,7 +44,10 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             token.token_type = TokenType::SUBOP;
         } else if chr == '*' {
             token.token_type = TokenType::MULOP;
-        } else if chr == '/' {
+        } else if chr == '%' { 
+            token.token_type = TokenType::MODOP; 
+        }
+        else if chr == '/' {
             token.token_type = TokenType::DIVOP;
         } else if chr.is_alphabetic() {
             let mut j = i;

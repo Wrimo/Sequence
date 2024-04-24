@@ -16,8 +16,9 @@ pub struct Statement {
 pub enum Expression { 
     ADD(Box<Expression>, Box<Expression>), 
     SUB(Box<Expression>, Box<Expression>),
-    MULT(Box<Expression>, Box<Expression>), 
+    MUL(Box<Expression>, Box<Expression>), 
     DIV(Box<Expression>, Box<Expression>), 
+    MOD(Box<Expression>, Box<Expression>), 
     IDENTIFIER(String),
     INTEGER(i32), 
     NONE
