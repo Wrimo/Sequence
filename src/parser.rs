@@ -2,13 +2,6 @@ use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, To
 use std::str::FromStr;
 use std::{fs, vec};
 
-fn keyword_check(word: &str) -> Option<TokenType> {
-    match word.to_ascii_uppercase().as_str() {
-        "PRINT" => Some(TokenType::PRINT),
-        _ => None,
-    }
-}
-
 fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     let mut tokens: Vec<Token> = Vec::new();
 
@@ -53,7 +46,7 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             let mut j = i;
             while j < input.len() - 1 && chars[j + 1].is_alphanumeric() {
                 j += 1;
-                if let Some(x) = keyword_check(&input[i..j + 1]) {
+                if let Ok(x) = TokenType::from_str(&input[i..j + 1].to_uppercase()) {
                     token.token_type = x;
                 }
             }
@@ -204,7 +197,7 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
     //     for j in 0..M[i].len() {
     //         print!("{{");
     //         for x in &M[i][j] {
-    //             print!("{} {:?}", x.symbol, x.token.token_type);
+    //             print!("{} {:?} ", x.symbol, x.token.token_type);
     //         }
     //         print!("}}");
     //     }

@@ -15,6 +15,7 @@ fn generate_abstract_syntax(
             // we only care about the S entry at the start point
             continue; // other entries only exist since S must repeat some productions due to Chomsky Normal Form constraints
         }
+ 
         match (x.prev, x.prev1) {
             (Some(i), Some(j)) => {
                 match x.symbol.as_str() {
@@ -49,6 +50,8 @@ fn generate_abstract_syntax(
                         }
                     }
                     TokenType::IDENTIFIER(s) => statement.var_name = Some(s.clone()),
+                    TokenType::INTEGER(x) => statement.expr = Some(Box::new(Expression::INTEGER(x.clone()))), // is there a way to make this part of generate_expression?
+                    // currently it is not called for cases like since it is not a terminal symbol
                     _ => {}
                 }
             }
@@ -64,34 +67,39 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
     for x in &m[index.0][index.1] {
         match (x.prev, x.prev1) {
             (Some(i), Some(j)) => {
-                let mut r: Box<Expression> = rc_generate_expression(m, i);
-                let mut l: Box<Expression> = rc_generate_expression(m, j);
-
-                // if the right returned an operator, we want to it return it as the result for this node
-                // with the the left to left
-
-                match *l {
-                    // check left first because grammar expands to left (Expr AddOp_Term)
-                    Expression::ADD(ref mut x, ref _y)
-                    | Expression::SUB(ref mut x, ref _y)
-                    | Expression::MUL(ref mut x, ref _y)
-                    | Expression::DIV(ref mut x, ref _y) 
-                    | Expression::MOD(ref mut x, ref _y) => {
-                        *x = r;
-                        return l;
-                    }
-                    _ => {}
-                }
+                let mut r: Box<Expression> = rc_generate_expression(m, j);
+                let mut l: Box<Expression> = rc_generate_expression(m, i);
 
                 match *r {
                     Expression::ADD(ref _x, ref mut y)
                     | Expression::SUB(ref _x, ref mut y)
                     | Expression::MUL(ref _x, ref mut y)
-                    | Expression::DIV(ref _x, ref mut y) 
-                    | Expression::MOD(ref _x, ref mut y)=> {
+                    | Expression::DIV(ref _x, ref mut y)
+                    | Expression::MOD(ref _x, ref mut y) => {
                         *y = l;
                         return r;
                     }
+
+                    _ => {}
+                }
+                
+                match *l {
+                    Expression::ADD(ref mut x, ref _y)
+                    | Expression::SUB(ref mut x, ref _y)
+                    | Expression::MUL(ref mut x, ref _y)
+                    | Expression::DIV(ref mut x, ref _y)
+                    | Expression::MOD(ref mut x, ref _y) => {
+                        *x = r;
+                        return l;
+                    }
+
+                    Expression::PREV(ref mut s) => {
+                        if let Expression::IDENTIFIER(s1) = *r {
+                            *s = s1;
+                        }
+                        return l;
+                    }
+
                     _ => {}
                 }
             }
@@ -105,6 +113,7 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
                     TokenType::MULOP => return Box::new(Expression::MUL(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                     TokenType::DIVOP => return Box::new(Expression::DIV(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                     TokenType::MODOP => return Box::new(Expression::MOD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                    TokenType::PREV => return Box::new(Expression::PREV(String::from(""))),
                     _ => {}
                 };
             }
@@ -114,20 +123,21 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
 }
 
 fn execute_program(program: &Vec<Statement>) {
-    let mut memory: HashMap<&str, i32> = HashMap::new();
+    let mut memory: HashMap<&str, Vec<i32>> = HashMap::new();
 
     for statement in program {
-        println!("{:?}", statement);
+        // println!("{:?}", statement);
         match statement.statement_type {
             StatementType::ASSIGN => {
                 let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
                 memory
-                    .entry(statement.var_name.as_ref().unwrap())
-                    .and_modify(|x| *x = val)
-                    .or_insert(val);
+                    .entry(&statement.var_name.as_ref().unwrap() as &str)
+                    .and_modify(|ent| ent.push(val))
+                    .or_insert(vec![val]);
             }
             StatementType::PRINT => {
-                println!("{}", memory.entry(statement.var_name.as_ref().unwrap()).or_insert(0));
+                let var_history: &Vec<i32> = memory.get(&statement.var_name.as_ref().unwrap() as &str).unwrap();
+                println!("{}", var_history[var_history.len() - 1]);
             }
 
             _ => {}
@@ -135,7 +145,7 @@ fn execute_program(program: &Vec<Statement>) {
     }
 }
 
-fn calculate_expression(expr: Box<Expression>, memory: &HashMap<&str, i32>) -> i32 {
+fn calculate_expression(expr: Box<Expression>, memory: &HashMap<&str, Vec<i32>>) -> i32 {
     match *expr {
         Expression::ADD(x, y) => calculate_expression(x, memory) + calculate_expression(y, memory),
         Expression::SUB(x, y) => calculate_expression(x, memory) - calculate_expression(y, memory),
@@ -144,7 +154,15 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<&str, i32>) -> i
         Expression::MOD(x, y) => calculate_expression(x, memory) % calculate_expression(y, memory),
 
         Expression::INTEGER(x) => x,
-        Expression::IDENTIFIER(s) => *memory.get(&*s).unwrap(),
+        Expression::IDENTIFIER(s) => {
+            let var_history: &Vec<i32> = memory.get(&*s).unwrap();
+            var_history[var_history.len() - 1]
+        }
+
+        Expression::PREV(s) => {
+            let var_history: &Vec<i32> = memory.get(&*s).unwrap();
+            var_history[var_history.len() - 2]
+        }
 
         Expression::NONE => 0,
     }

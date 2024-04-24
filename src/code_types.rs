@@ -19,6 +19,7 @@ pub enum Expression {
     MUL(Box<Expression>, Box<Expression>), 
     DIV(Box<Expression>, Box<Expression>), 
     MOD(Box<Expression>, Box<Expression>), 
+    PREV(String), 
     IDENTIFIER(String),
     INTEGER(i32), 
     NONE

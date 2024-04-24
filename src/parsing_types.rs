@@ -18,6 +18,7 @@ pub enum TokenType {
     SEMICOLON,
     NEWLINE,
     PRINT,
+    PREV,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -63,6 +64,7 @@ impl FromStr for TokenType {
             "SEMICOLON" => Ok(TokenType::SEMICOLON),
             "NEWLINE" => Ok(TokenType::NEWLINE),
             "PRINT" => Ok(TokenType::PRINT),
+            "PREV" => Ok(TokenType::PREV),
             _ => {return Err(())},
         }
     }

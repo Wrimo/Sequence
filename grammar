@@ -12,9 +12,10 @@ AssignState -> Identifier AssignState2
 AssignState2 -> Assign Expr
 
 # grammar for expressions 
-Expr -> INTEGER | IDENTIFIER | Expr AddOp_Term | Term MulOp_Factor
-Term -> INTEGER  | IDENTIFIER | Term MulOp_factor 
-Factor -> INTEGER | IDENTIFIER
+Expr -> INTEGER | IDENTIFIER | Prev Identifier | Expr AddOp_Term | Term MulOp_Factor
+Term -> INTEGER  | IDENTIFIER | Prev Identifier | Term MulOp_factor 
+Factor -> INTEGER | IDENTIFIER | Prev Identifier
+
 
 MulOp_Factor -> MulOp Factor
 AddOp_Term -> AddOp Term 
@@ -31,4 +32,5 @@ PrintKeyword -> PRINT
 StatementEnd -> NEWLINE 
 Assign -> ASSIGNMENT
 Int -> INTEGER
+Prev -> PREV
 None -> NONE
