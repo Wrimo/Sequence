@@ -15,7 +15,6 @@ fn generate_abstract_syntax(
             // we only care about the S entry at the start point
             continue; // other entries only exist since S must repeat some productions due to Chomsky Normal Form constraints
         }
- 
         match (x.prev, x.prev1) {
             (Some(i), Some(j)) => {
                 match x.symbol.as_str() {
@@ -27,6 +26,22 @@ fn generate_abstract_syntax(
                     "PrintState" => {
                         statement.reset();
                         statement.statement_type = StatementType::PRINT;
+                    }
+                    "IfState" => { 
+                        statement.reset();
+                    }
+
+                    "IfState4" => { // according to the grammar, IfState4 is the one with the StatementList
+                        statement.statement_type = StatementType::IF;
+                        let mut if_state: Statement = statement.clone(); 
+                        if_state.code_block = Some(Vec::new());
+
+                        if let Some(ref mut block) = if_state.code_block { 
+                            generate_abstract_syntax(m, block, statement, i);
+                            generate_abstract_syntax(m, block, statement, j);        
+                        }
+                        program.push(if_state);
+                        return; 
                     }
                     "Expr" => {
                         statement.expr = Some(generate_expression(m, index));
@@ -52,6 +67,7 @@ fn generate_abstract_syntax(
                     TokenType::IDENTIFIER(s) => statement.var_name = Some(s.clone()),
                     TokenType::INTEGER(x) => statement.expr = Some(Box::new(Expression::INTEGER(x.clone()))), // is there a way to make this part of generate_expression?
                     // currently it is not called for cases like since it is not a terminal symbol
+                    // similary there is a bug where b <- a does not work 
                     _ => {}
                 }
             }
@@ -122,22 +138,28 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
     return Box::new(Expression::NONE);
 }
 
-fn execute_program(program: &Vec<Statement>) {
-    let mut memory: HashMap<&str, Vec<i32>> = HashMap::new();
-
+fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<i32>>) {
     for statement in program {
         // println!("{:?}", statement);
         match statement.statement_type {
             StatementType::ASSIGN => {
                 let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                let name: String = statement.var_name.clone().unwrap();
                 memory
-                    .entry(&statement.var_name.as_ref().unwrap() as &str)
+                    .entry(name)
                     .and_modify(|ent| ent.push(val))
                     .or_insert(vec![val]);
             }
             StatementType::PRINT => {
-                let var_history: &Vec<i32> = memory.get(&statement.var_name.as_ref().unwrap() as &str).unwrap();
-                println!("{}", var_history[var_history.len() - 1]);
+                let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                println!("{}", x);
+            }
+
+            StatementType::IF => { 
+                let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                if x >= 1 { 
+                    execute_program(&statement.code_block.as_ref().unwrap(), memory);
+                }
             }
 
             _ => {}
@@ -145,7 +167,7 @@ fn execute_program(program: &Vec<Statement>) {
     }
 }
 
-fn calculate_expression(expr: Box<Expression>, memory: &HashMap<&str, Vec<i32>>) -> i32 {
+fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<i32>>) -> i32 {
     match *expr {
         Expression::ADD(x, y) => calculate_expression(x, memory) + calculate_expression(y, memory),
         Expression::SUB(x, y) => calculate_expression(x, memory) - calculate_expression(y, memory),
@@ -155,12 +177,12 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<&str, Vec<i32>>)
 
         Expression::INTEGER(x) => x,
         Expression::IDENTIFIER(s) => {
-            let var_history: &Vec<i32> = memory.get(&*s).unwrap();
+            let var_history: &Vec<i32> = memory.get(&s).unwrap();
             var_history[var_history.len() - 1]
         }
 
         Expression::PREV(s) => {
-            let var_history: &Vec<i32> = memory.get(&*s).unwrap();
+            let var_history: &Vec<i32> = memory.get(&s).unwrap();
             var_history[var_history.len() - 2]
         }
 
@@ -185,6 +207,7 @@ pub fn run_program(input: &str) {
                 statement_type: StatementType::NONE,
                 var_name: None,
                 expr: None,
+                code_block: None,
             };
 
             generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev.unwrap());
@@ -192,5 +215,6 @@ pub fn run_program(input: &str) {
             break;
         }
     }
-    execute_program(&program);
+    let mut memory: HashMap<String, Vec<i32>> = HashMap::new();
+    execute_program(&program, &mut memory);
 }

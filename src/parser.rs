@@ -31,16 +31,19 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             token.token_type = TokenType::RPAREN;
         } else if chr == ')' {
             token.token_type = TokenType::LPAREN;
+        } else if chr == '}' {
+            token.token_type = TokenType::LBRACKET;
+        } else if chr == '{' {
+            token.token_type = TokenType::RBRACKET;
         } else if chr == '+' {
             token.token_type = TokenType::ADDOP;
         } else if chr == '-' {
             token.token_type = TokenType::SUBOP;
         } else if chr == '*' {
             token.token_type = TokenType::MULOP;
-        } else if chr == '%' { 
-            token.token_type = TokenType::MODOP; 
-        }
-        else if chr == '/' {
+        } else if chr == '%' {
+            token.token_type = TokenType::MODOP;
+        } else if chr == '/' {
             token.token_type = TokenType::DIVOP;
         } else if chr.is_alphabetic() {
             let mut j = i;
@@ -67,12 +70,8 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
+    // prevents the language from requiring an empty new line at the end  
     tokens.push(Token {
-        // adding an arbitary NEWLINE lets the grammar assume every statement is followed by a newline
-        token_type: TokenType::NEWLINE,
-    });
-    tokens.push(Token {
-        // adding an arbitary NEWLINE lets the grammar assume every statement is followed by a newline
         token_type: TokenType::NEWLINE,
     });
     return Some(tokens);
@@ -149,7 +148,7 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
     // for x in &tokens {
     //     println!("{:?}", x);
     // }
-    
+
     let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
 
     for i in 0..tokens.len() {
@@ -159,7 +158,7 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
                     symbol: grammar[r].symbol.clone(),
                     prev: None,
                     prev1: None,
-                    token: tokens[i].clone(), // there's a potential error since tokens gets associated with productions that could go to then, not ones of do. what if two terminals from one terminal?
+                    token: tokens[i].clone(), // is there a potential error since tokens gets associated with productions that could go to then, not ones of do - what if two terminals from one terminal?
                 };
                 M[i][i].push(ent);
             }
@@ -197,7 +196,7 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
     //     for j in 0..M[i].len() {
     //         print!("{{");
     //         for x in &M[i][j] {
-    //             print!("{} {:?} ", x.symbol, x.token.token_type);
+    //             print!("{} ", x.symbol);
     //         }
     //         print!("}}");
     //     }

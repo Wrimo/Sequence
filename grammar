@@ -1,15 +1,23 @@
-S -> NEWLINE | Statement StatementList | PrintState StatementEnd | AssignState StatementEnd
+# grammar for the language 
+# written in Chomsky Normal Form so the CYK Algorithm will work 
+
+S -> NEWLINE | StatementList StatementEnd | PrintState PrintState2 | AssignState Expr | IfState IfState2 
 
 # statement level constructions
-StatementList -> Statement StatementList | NEWLINE
-Statement -> PrintState StatementEnd | AssignState StatementEnd 
+StatementList -> Statement StatementListRec | PrintState PrintState2 | AssignState Expr | IfState IfState2 
+StatementListRec -> StatementEnd StatementList
+Statement -> PrintState PrintState2 | AssignState Expr | IfState IfState2 
 
-PrintState -> PrintKeyword PrintState2 
-PrintState2 -> RParen PrintState3 
-PrintState3 -> Identifier LParen
+PrintState -> PrintKeyword RParen
+PrintState2 -> Expr LParen 
 
-AssignState -> Identifier AssignState2 
-AssignState2 -> Assign Expr
+AssignState -> Identifier Assign
+
+IfState -> If Expr
+IfState2 -> RBracket IfState3
+IfState3 -> StatementEnd IfState4 
+IfState4 -> StatementList IfState5 
+IfState5 -> StatementEnd LBracket
 
 # grammar for expressions 
 Expr -> INTEGER | IDENTIFIER | Prev Identifier | Expr AddOp_Term | Term MulOp_Factor
@@ -25,6 +33,8 @@ AddOp -> ADDOP | SUBOP
 
 
 # simple nonterminals to encode terminals (allows them to be concatted)
+RBracket -> RBRACKET 
+LBracket -> LBRACKET
 RParen -> RPAREN 
 LParen -> LPAREN 
 Identifier -> IDENTIFIER
@@ -33,4 +43,5 @@ StatementEnd -> NEWLINE
 Assign -> ASSIGNMENT
 Int -> INTEGER
 Prev -> PREV
+If -> IF
 None -> NONE

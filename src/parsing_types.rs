@@ -12,13 +12,16 @@ pub enum TokenType {
     SUBOP,
     MULOP,
     MODOP,
-    DIVOP, 
+    DIVOP,
     RPAREN,
     LPAREN,
+    RBRACKET,
+    LBRACKET,
     SEMICOLON,
     NEWLINE,
     PRINT,
     PREV,
+    IF,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -41,7 +44,7 @@ pub struct CYKEntry {
     pub symbol: String,
     pub prev: Option<(usize, usize)>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
     pub prev1: Option<(usize, usize)>,
-    pub token: Token
+    pub token: Token,
 }
 
 impl FromStr for TokenType {
@@ -56,16 +59,19 @@ impl FromStr for TokenType {
             "FLOAT" => Ok(TokenType::FLOAT(0.0)),
             "ADDOP" => Ok(TokenType::ADDOP),
             "SUBOP" => Ok(TokenType::SUBOP),
-            "MULOP" => Ok(TokenType::MULOP), 
-            "MODOP" => Ok(TokenType::MODOP), 
+            "MULOP" => Ok(TokenType::MULOP),
+            "MODOP" => Ok(TokenType::MODOP),
             "DIVOP" => Ok(TokenType::DIVOP),
             "RPAREN" => Ok(TokenType::RPAREN),
             "LPAREN" => Ok(TokenType::LPAREN),
+            "RBRACKET" => Ok(TokenType::RBRACKET),
+            "LBRACKET" => Ok(TokenType::LBRACKET),
             "SEMICOLON" => Ok(TokenType::SEMICOLON),
             "NEWLINE" => Ok(TokenType::NEWLINE),
             "PRINT" => Ok(TokenType::PRINT),
             "PREV" => Ok(TokenType::PREV),
-            _ => {return Err(())},
+            "IF" => Ok(TokenType::IF),
+            _ => return Err(()),
         }
     }
 }

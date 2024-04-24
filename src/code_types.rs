@@ -3,12 +3,14 @@ pub enum StatementType {
     NONE,
     PRINT,
     ASSIGN,
+    IF
 }
 
 #[derive(Clone, Debug)]
 pub struct Statement {
     pub statement_type: StatementType,
     pub var_name: Option<String>,
+    pub code_block: Option<Vec<Statement>>, 
     pub expr: Option<Box<Expression>>,
 }
 
@@ -30,5 +32,6 @@ impl Statement {
         self.statement_type = StatementType::NONE;
         self.var_name = None;
         self.expr = None;
+        self.code_block = None;  
     }
 }
