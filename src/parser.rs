@@ -150,9 +150,9 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
         None => return Err(()),
     };
 
-    for x in &tokens {
-        println!("{:?}", x);
-    }
+    // for x in &tokens {
+    //     println!("{:?}", x);
+    // }
     
     let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
 
@@ -197,16 +197,16 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
             }
         }
     }
-    for i in 0..M.len() {
-        for j in 0..M[i].len() {
-            print!("{{");
-            for x in &M[i][j] {
-                print!("{} ", x.symbol);
-            }
-            print!("}}");
-        }
-        println!();
-    }
+    // for i in 0..M.len() {
+    //     for j in 0..M[i].len() {
+    //         print!("{{");
+    //         for x in &M[i][j] {
+    //             print!("{} {:?}", x.symbol, x.token.token_type);
+    //         }
+    //         print!("}}");
+    //     }
+    //     println!();
+    // }
     for ent in &M[0][tokens.len() - 1] {
         if ent.symbol == "S" {
             return Ok(M);

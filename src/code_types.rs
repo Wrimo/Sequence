@@ -5,18 +5,28 @@ pub enum StatementType {
     ASSIGN,
 }
 
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Statement {
     pub statement_type: StatementType,
     pub var_name: Option<String>,
-    pub val: Option<i32>, // replace with expression
+    pub expr: Option<Box<Expression>>,
+}
+
+#[derive(Clone, Debug)]
+pub enum Expression { 
+    ADD(Box<Expression>, Box<Expression>), 
+    SUB(Box<Expression>, Box<Expression>),
+    MULT(Box<Expression>, Box<Expression>), 
+    DIV(Box<Expression>, Box<Expression>), 
+    IDENTIFIER(String),
+    INTEGER(i32), 
+    NONE
 }
 
 impl Statement {
-    pub fn reset(&mut self) { 
+    pub fn reset(&mut self) {
         self.statement_type = StatementType::NONE;
-        self.var_name = None; 
-        self.val = None;
+        self.var_name = None;
+        self.expr = None;
     }
 }

@@ -13,13 +13,14 @@ AssignState2 -> Assign Expr
 
 # grammar for expressions 
 Expr -> INTEGER | IDENTIFIER | Expr AddOp_Term | Term MulOp_Factor
-Term -> INTEGER  | IDENTIFIER | Term MulOp_factor 
+Term -> INTEGER  | IDENTIFIER 
+# | Term MulOp_factor 
 Factor -> INTEGER | IDENTIFIER
 
-MulOp_Factor -> MulOp Factor
+# MulOp_Factor -> MulOp Factor
 AddOp_Term -> AddOp Term 
 
-MulOp -> MULOP | DIVOP
+# MulOp -> MULOP | DIVOP
 AddOp -> ADDOP | SUBOP
 
 
