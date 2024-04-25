@@ -27,6 +27,8 @@ pub enum TokenType {
     NEWLINE,
     PRINT,
     PREV,
+    BEGIN, 
+    EXPECT, 
     IF,
 }
 #[derive(Debug, Clone)]
@@ -49,7 +51,7 @@ pub struct ConcattedProductions {
 pub struct CYKEntry {
     pub symbol: String,
     pub left_prev: Option<(usize, usize)>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
-    pub right_prev: Option<(usize, usize)>,
+    pub right_prev: Option<(usize, usize)>, // TODO: has a bug: I am going back to the whole previous index, not just the specific one that leds to me. Need to store index and symbol 
     pub token: Token,
 }
 
@@ -82,6 +84,8 @@ impl FromStr for TokenType {
             "NEWLINE" => Ok(TokenType::NEWLINE),
             "PRINT" => Ok(TokenType::PRINT),
             "PREV" => Ok(TokenType::PREV),
+            "BEGIN" => Ok(TokenType::BEGIN), 
+            "EXPECT" => Ok(TokenType::EXPECT),
             "IF" => Ok(TokenType::IF),
             _ => return Err(()),
         }

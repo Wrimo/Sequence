@@ -1,12 +1,17 @@
 # grammar for the language 
 # written in Chomsky Normal Form so the CYK Algorithm will work 
 
-S -> NEWLINE | StatementList StatementEnd | PrintState PrintState2 | AssignState Expr | IfState IfState2 
+S -> NEWLINE | StatementList StatementEnd | Statement StatementEnd
 
 # statement level constructions
-StatementList -> Statement StatementListRec | PrintState PrintState2 | AssignState Expr | IfState IfState2 
+StatementList -> Statement StatementListRec | PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock
 StatementListRec -> StatementEnd StatementList
-Statement -> PrintState PrintState2 | AssignState Expr | IfState IfState2 
+Statement -> PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock
+
+CodeBlock -> CodeBlock1 CodeBlock2
+CodeBlock1 -> RBracket StatementEnd
+CodeBlock2 -> StatementList CodeBlock3
+CodeBlock3 -> StatementEnd LBracket
 
 PrintState -> PrintKeyword RParen
 PrintState2 -> Expr LParen 
@@ -14,10 +19,9 @@ PrintState2 -> Expr LParen
 AssignState -> Identifier Assign
 
 IfState -> If Expr
-IfState2 -> RBracket IfState3
-IfState3 -> StatementEnd IfState4 
-IfState4 -> StatementList IfState5 
-IfState5 -> StatementEnd LBracket
+
+BeginState -> BEGIN
+ExpectState -> Expect Expr 
 
 # grammar for expressions 
 Expr -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_CloseExpr | Term MulOp_Factor | Expr1 CompOp_Expr1 | Expr AddOp_Term
@@ -47,4 +51,5 @@ Assign -> ASSIGNMENT
 Int -> INTEGER
 Prev -> PREV
 If -> IF
+Expect -> EXPECT 
 None -> NONE

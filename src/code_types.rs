@@ -3,7 +3,9 @@ pub enum StatementType {
     NONE,
     PRINT,
     ASSIGN,
-    IF
+    IF, 
+    BEGIN, 
+    EXPECT,
 }
 
 #[derive(Clone, Debug)]
@@ -15,8 +17,8 @@ pub struct Statement {
 }
 
 pub struct Program { 
-    pub begin_block: Vec<Statement>, 
-    pub expect_block: Vec<Statement>,
+    pub begin_block: Option<Statement>,
+    pub expect_block: Option<Statement>,
     pub body: Vec<Statement>,
 }
 

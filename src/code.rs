@@ -7,10 +7,11 @@ use crate::parsing_types::{CYKEntry, TokenType};
 fn generate_abstract_syntax(
     m: &Vec<Vec<Vec<CYKEntry>>>,
     code_block: &mut Vec<Statement>,
-    program: &mut Program, 
+    program: &mut Program,
     statement: &mut Statement,
     index: (usize, usize),
 ) {
+
     for x in &m[index.0][index.1] {
         if x.symbol == "S" {
             // we only care about the S entry at the start point
@@ -30,19 +31,36 @@ fn generate_abstract_syntax(
                     }
                     "IfState" => {
                         statement.reset();
+                        statement.statement_type = StatementType::IF;
+                        println!("reached IfState");
                     }
 
-                    "IfState4" => {
-                        // according to the grammar, IfState4 is the one with the StatementList
-                        statement.statement_type = StatementType::IF;
-                        let mut if_state: Statement = statement.clone();
-                        if_state.code_block = Some(Vec::new());
+                    "BeginState" => {
+                        statement.reset();
+                        statement.statement_type = StatementType::BEGIN;
+                    }
 
-                        if let Some(ref mut block) = if_state.code_block {
+                    "ExpectState" => {
+                        statement.reset();
+                        statement.statement_type = StatementType::EXPECT;
+                    }
+
+                    "CodeBlock2" => {
+                        // according to the grammar, IfState4 is the one with the StatementList
+                        let mut cur_state: Statement = statement.clone();
+                        println!("reached start of code block");
+                        cur_state.code_block = Some(Vec::new());
+
+                        if let Some(ref mut block) = cur_state.code_block {
                             generate_abstract_syntax(m, block, program, statement, i);
                             generate_abstract_syntax(m, block, program, statement, j);
                         }
-                        code_block.push(if_state);
+                        println!(
+                            "statement: {:?} has a code_block of {}",
+                            cur_state,
+                            cur_state.code_block.as_ref().unwrap().len()
+                        );
+                        code_block.push(cur_state);
                         return;
                     }
                     "Expr" => {
@@ -54,16 +72,21 @@ fn generate_abstract_syntax(
                 }
                 generate_abstract_syntax(m, code_block, program, statement, i);
                 generate_abstract_syntax(m, code_block, program, statement, j);
+                println!("end of {}", x.symbol.as_str());
             }
             _ => {
                 // handle terminals, equivalent to token
 
                 match &x.token.token_type {
                     TokenType::NEWLINE => {
-                        if statement.statement_type != StatementType::NONE {
-                            // needed because nonterminals get associated with tokens they could go to even if they don't
-                            code_block.push(statement.clone());
-                            statement.reset();
+                        // only want to push statements here that do not have corresponding code blocks
+                        match statement.statement_type {
+                            StatementType::ASSIGN | StatementType::PRINT => {
+                                println!("pushed statement {:?}", statement.statement_type);
+                                code_block.push(statement.clone());
+                                statement.reset();
+                            }
+                            _ => {}
                         }
                     }
                     TokenType::IDENTIFIER(s) => statement.var_name = Some(s.clone()),
@@ -72,6 +95,7 @@ fn generate_abstract_syntax(
                     // similary there is a bug where b <- a does not work
                     _ => {}
                 }
+                return;
             }
         }
     }
@@ -170,33 +194,6 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
     return Box::new(Expression::NONE);
 }
 
-fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<i32>>) {
-    for statement in program {
-        println!("{:?}", statement);
-        match statement.statement_type {
-            StatementType::ASSIGN => {
-                let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
-                let name: String = statement.var_name.clone().unwrap();
-                memory.entry(name).and_modify(|ent| ent.push(val)).or_insert(vec![val]);
-            }
-            StatementType::PRINT => {
-                // let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
-                let var_history: &Vec<i32> = memory.get(&*statement.var_name.as_ref().unwrap()).unwrap();
-                println!("{}", var_history[var_history.len() - 1]);
-            }
-
-            StatementType::IF => {
-                let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
-                if x >= 1 {
-                    execute_program(&statement.code_block.as_ref().unwrap(), memory);
-                }
-            }
-
-            _ => {}
-        }
-    }
-}
-
 fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<i32>>) -> i32 {
     match *expr {
         Expression::ADD(x, y) => calculate_expression(x, memory) + calculate_expression(y, memory),
@@ -226,6 +223,33 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<i32>
     }
 }
 
+fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<i32>>) {
+    for statement in program {
+        println!("{:?}", statement);
+        match statement.statement_type {
+            StatementType::ASSIGN => {
+                let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                let name: String = statement.var_name.clone().unwrap();
+                memory.entry(name).and_modify(|ent| ent.push(val)).or_insert(vec![val]);
+            }
+            StatementType::PRINT => {
+                // let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                let var_history: &Vec<i32> = memory.get(&*statement.var_name.as_ref().unwrap()).unwrap();
+                println!("{}", var_history[var_history.len() - 1]);
+            }
+
+            StatementType::IF => {
+                let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                if x >= 1 {
+                    execute_program(&statement.code_block.as_ref().unwrap(), memory);
+                }
+            }
+
+            _ => {}
+        }
+    }
+}
+
 pub fn run_program(input: &str) {
     let m = match parse(input) {
         Ok(x) => x,
@@ -237,9 +261,9 @@ pub fn run_program(input: &str) {
     println!("Parsing succeeded!");
 
     let mut program: Program = Program {
-        begin_block: Vec::new(), 
-        expect_block: Vec::new(), 
-        body: Vec::new()
+        begin_block: None,
+        expect_block: None,
+        body: Vec::new(),
     };
     let mut body: Vec<Statement> = Vec::new();
     for ent in &m[0][m.len() - 1] {
@@ -251,20 +275,33 @@ pub fn run_program(input: &str) {
                 code_block: None,
             };
 
-            generate_abstract_syntax(&m, &mut body, &mut program, &mut statement, ent.left_prev.unwrap());
-            generate_abstract_syntax(&m, &mut body, &mut program, &mut statement, ent.right_prev.unwrap());
-            program.body = body; 
+            generate_abstract_syntax(&m, &mut body, &mut program, &mut statement, ent.left_prev.unwrap()); 
+            generate_abstract_syntax(&m, &mut body, &mut program, &mut statement, ent.right_prev.unwrap()); 
+            program.body = body;
             break;
         }
     }
     let mut memory: HashMap<String, Vec<i32>> = HashMap::new();
-    // begin block logic 
-    loop {
-        execute_program(&program.body, &mut memory);     
-        // expect block logic
-        if true {
-            break;
-        }
+
+    println!("BEGIN EXECUTION: {}", program.body.len());
+    for i in &program.body {
+        println!("{:?}", i);
     }
-    
+    println!();
+    if let Some(begin_block) = program.begin_block {
+        println!("running begin block");
+        execute_program(&vec![begin_block], &mut memory)
+    }
+    loop {
+        execute_program(&program.body, &mut memory);
+        // expect block logic
+        if let Some(ref expect) = program.expect_block {
+            println!("running expect block");
+            if calculate_expression(expect.expr.clone().unwrap(), &memory) == 1 {
+                execute_program(&expect.code_block.as_ref().unwrap(), &mut memory);
+                break;
+            }
+        }
+        break;
+    }
 }

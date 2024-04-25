@@ -86,10 +86,13 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
-    // prevents the language from requiring an empty new line at the end
-    tokens.push(Token {
-        token_type: TokenType::NEWLINE,
-    });
+    // due to constraints of chomsky normal form (or my own inexperience)
+    // program is expected to be ended with a new line
+    if tokens.len() > 1 {
+        tokens.push(Token {
+            token_type: TokenType::NEWLINE,
+        });
+    }
     return Some(tokens);
 }
 
@@ -208,16 +211,16 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
             }
         }
     }
-    // for i in 0..M.len() {
-    //     for j in 0..M[i].len() {
-    //         print!("{{");
-    //         for x in &M[i][j] {
-    //             print!("{} ", x.symbol);
-    //         }
-    //         print!("}}");
-    //     }
-    //     println!();
-    // }
+    for i in 0..M.len() {
+        for j in 0..M[i].len() {
+            print!("{{");
+            for x in &M[i][j] {
+                print!("{} ", x.symbol);
+            }
+            print!("}}");
+        }
+        println!();
+    }
     for ent in &M[0][tokens.len() - 1] {
         if ent.symbol == "S" {
             return Ok(M);
