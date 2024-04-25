@@ -14,6 +14,12 @@ pub struct Statement {
     pub expr: Option<Box<Expression>>,
 }
 
+pub struct Program { 
+    pub begin_block: Vec<Statement>, 
+    pub expect_block: Vec<Statement>,
+    pub body: Vec<Statement>,
+}
+
 #[derive(Clone, Debug)]
 pub enum Expression { 
     ADD(Box<Expression>, Box<Expression>), 

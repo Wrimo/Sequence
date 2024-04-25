@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use crate::code_types::{Expression, Statement, StatementType};
+use crate::code_types::{Expression, Program, Statement, StatementType};
 use crate::parser::parse;
 use crate::parsing_types::{CYKEntry, TokenType};
 
 fn generate_abstract_syntax(
     m: &Vec<Vec<Vec<CYKEntry>>>,
-    program: &mut Vec<Statement>,
+    code_block: &mut Vec<Statement>,
+    program: &mut Program, 
     statement: &mut Statement,
     index: (usize, usize),
 ) {
@@ -38,10 +39,10 @@ fn generate_abstract_syntax(
                         if_state.code_block = Some(Vec::new());
 
                         if let Some(ref mut block) = if_state.code_block {
-                            generate_abstract_syntax(m, block, statement, i);
-                            generate_abstract_syntax(m, block, statement, j);
+                            generate_abstract_syntax(m, block, program, statement, i);
+                            generate_abstract_syntax(m, block, program, statement, j);
                         }
-                        program.push(if_state);
+                        code_block.push(if_state);
                         return;
                     }
                     "Expr" => {
@@ -51,8 +52,8 @@ fn generate_abstract_syntax(
 
                     _ => {} // should add error case here
                 }
-                generate_abstract_syntax(m, program, statement, i);
-                generate_abstract_syntax(m, program, statement, j);
+                generate_abstract_syntax(m, code_block, program, statement, i);
+                generate_abstract_syntax(m, code_block, program, statement, j);
             }
             _ => {
                 // handle terminals, equivalent to token
@@ -61,7 +62,7 @@ fn generate_abstract_syntax(
                     TokenType::NEWLINE => {
                         if statement.statement_type != StatementType::NONE {
                             // needed because nonterminals get associated with tokens they could go to even if they don't
-                            program.push(statement.clone());
+                            code_block.push(statement.clone());
                             statement.reset();
                         }
                     }
@@ -235,7 +236,12 @@ pub fn run_program(input: &str) {
     };
     println!("Parsing succeeded!");
 
-    let mut program: Vec<Statement> = Vec::new();
+    let mut program: Program = Program {
+        begin_block: Vec::new(), 
+        expect_block: Vec::new(), 
+        body: Vec::new()
+    };
+    let mut body: Vec<Statement> = Vec::new();
     for ent in &m[0][m.len() - 1] {
         if ent.symbol == "S" {
             let mut statement: Statement = Statement {
@@ -245,11 +251,20 @@ pub fn run_program(input: &str) {
                 code_block: None,
             };
 
-            generate_abstract_syntax(&m, &mut program, &mut statement, ent.left_prev.unwrap());
-            generate_abstract_syntax(&m, &mut program, &mut statement, ent.right_prev.unwrap());
+            generate_abstract_syntax(&m, &mut body, &mut program, &mut statement, ent.left_prev.unwrap());
+            generate_abstract_syntax(&m, &mut body, &mut program, &mut statement, ent.right_prev.unwrap());
+            program.body = body; 
             break;
         }
     }
     let mut memory: HashMap<String, Vec<i32>> = HashMap::new();
-    execute_program(&program, &mut memory);
+    // begin block logic 
+    loop {
+        execute_program(&program.body, &mut memory);     
+        // expect block logic
+        if true {
+            break;
+        }
+    }
+    
 }
