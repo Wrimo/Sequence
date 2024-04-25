@@ -27,6 +27,18 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         } else if chr == '<' && input.chars().nth(i + 1)? == '-' {
             token.token_type = TokenType::ASSIGNMENT;
             i += 1;
+        } else if chr == '=' && input.chars().nth(i + 1)? == '=' {
+            token.token_type = TokenType::EQUALOP;
+            i += 1;
+        } else if chr == '!' && input.chars().nth(i + 1)? == '=' {
+            token.token_type = TokenType::NOTEQUALOP;
+            i += 1;
+        } else if chr == '>' && input.chars().nth(i + 1)? == '=' {
+            token.token_type = TokenType::GETHANOP;
+            i += 1;
+        } else if chr == '<' && input.chars().nth(i + 1)? == '=' {
+            token.token_type = TokenType::LETHANOP;
+            i += 1;
         } else if chr == '(' {
             token.token_type = TokenType::RPAREN;
         } else if chr == ')' {
@@ -45,6 +57,10 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             token.token_type = TokenType::MODOP;
         } else if chr == '/' {
             token.token_type = TokenType::DIVOP;
+        } else if chr == '>' {
+            token.token_type = TokenType::GTHANOP;
+        } else if chr == '<' {
+            token.token_type = TokenType::LTHANOP;
         } else if chr.is_alphabetic() {
             let mut j = i;
             while j < input.len() - 1 && chars[j + 1].is_alphanumeric() {
@@ -70,7 +86,7 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
-    // prevents the language from requiring an empty new line at the end  
+    // prevents the language from requiring an empty new line at the end
     tokens.push(Token {
         token_type: TokenType::NEWLINE,
     });
@@ -145,9 +161,9 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
         None => return Err(()),
     };
 
-    // for x in &tokens {
-    //     println!("{:?}", x);
-    // }
+    for x in &tokens {
+        println!("{:?}", x);
+    }
 
     let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
 
@@ -156,8 +172,8 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
             if grammar[r].goes_to_terminal(&tokens[i]) {
                 let ent = CYKEntry {
                     symbol: grammar[r].symbol.clone(),
-                    prev: None,
-                    prev1: None,
+                    left_prev: None,
+                    right_prev: None,
                     token: tokens[i].clone(), // is there a potential error since tokens gets associated with productions that could go to then, not ones of do - what if two terminals from one terminal?
                 };
                 M[i][i].push(ent);
@@ -177,8 +193,8 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
                             if prod.goes_to_nonterminal(&b.symbol, &c.symbol) {
                                 let ent = CYKEntry {
                                     symbol: prod.symbol.clone(),
-                                    prev: Some((r, r + t)),
-                                    prev1: Some((r + t + 1, r + l)),
+                                    left_prev: Some((r, r + t)),
+                                    right_prev: Some((r + t + 1, r + l)),
                                     token: Token {
                                         token_type: TokenType::NONE,
                                     },

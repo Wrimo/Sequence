@@ -15,7 +15,7 @@ fn generate_abstract_syntax(
             // we only care about the S entry at the start point
             continue; // other entries only exist since S must repeat some productions due to Chomsky Normal Form constraints
         }
-        match (x.prev, x.prev1) {
+        match (x.left_prev, x.right_prev) {
             (Some(i), Some(j)) => {
                 match x.symbol.as_str() {
                     // handle nonterminals
@@ -27,21 +27,22 @@ fn generate_abstract_syntax(
                         statement.reset();
                         statement.statement_type = StatementType::PRINT;
                     }
-                    "IfState" => { 
+                    "IfState" => {
                         statement.reset();
                     }
 
-                    "IfState4" => { // according to the grammar, IfState4 is the one with the StatementList
+                    "IfState4" => {
+                        // according to the grammar, IfState4 is the one with the StatementList
                         statement.statement_type = StatementType::IF;
-                        let mut if_state: Statement = statement.clone(); 
+                        let mut if_state: Statement = statement.clone();
                         if_state.code_block = Some(Vec::new());
 
-                        if let Some(ref mut block) = if_state.code_block { 
+                        if let Some(ref mut block) = if_state.code_block {
                             generate_abstract_syntax(m, block, statement, i);
-                            generate_abstract_syntax(m, block, statement, j);        
+                            generate_abstract_syntax(m, block, statement, j);
                         }
                         program.push(if_state);
-                        return; 
+                        return;
                     }
                     "Expr" => {
                         statement.expr = Some(generate_expression(m, index));
@@ -67,7 +68,7 @@ fn generate_abstract_syntax(
                     TokenType::IDENTIFIER(s) => statement.var_name = Some(s.clone()),
                     TokenType::INTEGER(x) => statement.expr = Some(Box::new(Expression::INTEGER(x.clone()))), // is there a way to make this part of generate_expression?
                     // currently it is not called for cases like since it is not a terminal symbol
-                    // similary there is a bug where b <- a does not work 
+                    // similary there is a bug where b <- a does not work
                     _ => {}
                 }
             }
@@ -81,31 +82,31 @@ fn generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) -> Bo
 
 fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) -> Box<Expression> {
     for x in &m[index.0][index.1] {
-        match (x.prev, x.prev1) {
+        match (x.left_prev, x.right_prev) {
             (Some(i), Some(j)) => {
-                let mut r: Box<Expression> = rc_generate_expression(m, j);
                 let mut l: Box<Expression> = rc_generate_expression(m, i);
+                let mut r: Box<Expression> = rc_generate_expression(m, j);
 
                 match *r {
-                    Expression::ADD(ref _x, ref mut y)
-                    | Expression::SUB(ref _x, ref mut y)
-                    | Expression::MUL(ref _x, ref mut y)
-                    | Expression::DIV(ref _x, ref mut y)
-                    | Expression::MOD(ref _x, ref mut y) => {
-                        *y = l;
+                    Expression::ADD(ref mut x, ref mut y)
+                    | Expression::SUB(ref mut x, ref mut y)
+                    | Expression::MUL(ref mut x, ref mut y)
+                    | Expression::DIV(ref mut x, ref mut y)
+                    | Expression::MOD(ref mut x, ref mut y) => {
+                        *x = l;
                         return r;
                     }
 
                     _ => {}
                 }
-                
+
                 match *l {
-                    Expression::ADD(ref mut x, ref _y)
-                    | Expression::SUB(ref mut x, ref _y)
-                    | Expression::MUL(ref mut x, ref _y)
-                    | Expression::DIV(ref mut x, ref _y)
-                    | Expression::MOD(ref mut x, ref _y) => {
-                        *x = r;
+                    Expression::ADD(ref mut x, ref mut _y)
+                    | Expression::SUB(ref mut x, ref mut _y)
+                    | Expression::MUL(ref mut x, ref mut _y)
+                    | Expression::DIV(ref mut x, ref mut _y)
+                    | Expression::MOD(ref mut x, ref mut _y) => {
+                        *_y = r;
                         return l;
                     }
 
@@ -129,6 +130,24 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
                     TokenType::MULOP => return Box::new(Expression::MUL(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                     TokenType::DIVOP => return Box::new(Expression::DIV(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                     TokenType::MODOP => return Box::new(Expression::MOD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                    TokenType::EQUALOP => {
+                        return Box::new(Expression::EQU(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                    }
+                    TokenType::NOTEQUALOP => {
+                        return Box::new(Expression::NEQU(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                    }
+                    TokenType::GTHANOP => {
+                        return Box::new(Expression::GTH(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                    }
+                    TokenType::GETHANOP => {
+                        return Box::new(Expression::GTHE(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                    }
+                    TokenType::LTHANOP => {
+                        return Box::new(Expression::LTH(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                    }
+                    TokenType::LETHANOP => {
+                        return Box::new(Expression::LTHE(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                    }
                     TokenType::PREV => return Box::new(Expression::PREV(String::from(""))),
                     _ => {}
                 };
@@ -140,24 +159,22 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
 
 fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<i32>>) {
     for statement in program {
-        // println!("{:?}", statement);
+        println!("{:?}", statement);
         match statement.statement_type {
             StatementType::ASSIGN => {
                 let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
                 let name: String = statement.var_name.clone().unwrap();
-                memory
-                    .entry(name)
-                    .and_modify(|ent| ent.push(val))
-                    .or_insert(vec![val]);
+                memory.entry(name).and_modify(|ent| ent.push(val)).or_insert(vec![val]);
             }
             StatementType::PRINT => {
-                let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
-                println!("{}", x);
+                // let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                let var_history: &Vec<i32> = memory.get(&*statement.var_name.as_ref().unwrap()).unwrap();
+                println!("{}", var_history[var_history.len() - 1]);
             }
 
-            StatementType::IF => { 
+            StatementType::IF => {
                 let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
-                if x >= 1 { 
+                if x >= 1 {
                     execute_program(&statement.code_block.as_ref().unwrap(), memory);
                 }
             }
@@ -174,6 +191,12 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<i32>
         Expression::MUL(x, y) => calculate_expression(x, memory) * calculate_expression(y, memory),
         Expression::DIV(x, y) => calculate_expression(x, memory) / calculate_expression(y, memory),
         Expression::MOD(x, y) => calculate_expression(x, memory) % calculate_expression(y, memory),
+        Expression::EQU(x, y) => (calculate_expression(x, memory) == calculate_expression(y, memory)) as i32,
+        Expression::NEQU(x, y) => (calculate_expression(x, memory) != calculate_expression(y, memory)) as i32,
+        Expression::LTH(x, y) => (calculate_expression(x, memory) < calculate_expression(y, memory)) as i32,
+        Expression::LTHE(x, y) => (calculate_expression(x, memory) <= calculate_expression(y, memory)) as i32,
+        Expression::GTH(x, y) => (calculate_expression(x, memory) > calculate_expression(y, memory)) as i32,
+        Expression::GTHE(x, y) => (calculate_expression(x, memory) >= calculate_expression(y, memory)) as i32,
 
         Expression::INTEGER(x) => x,
         Expression::IDENTIFIER(s) => {
@@ -210,8 +233,8 @@ pub fn run_program(input: &str) {
                 code_block: None,
             };
 
-            generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev.unwrap());
-            generate_abstract_syntax(&m, &mut program, &mut statement, ent.prev1.unwrap());
+            generate_abstract_syntax(&m, &mut program, &mut statement, ent.left_prev.unwrap());
+            generate_abstract_syntax(&m, &mut program, &mut statement, ent.right_prev.unwrap());
             break;
         }
     }

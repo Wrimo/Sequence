@@ -20,11 +20,11 @@ IfState4 -> StatementList IfState5
 IfState5 -> StatementEnd LBracket
 
 # grammar for expressions 
-Expr -> INTEGER | IDENTIFIER | Prev Identifier | Expr AddOp_Term | Term MulOp_Factor
-Term -> INTEGER  | IDENTIFIER | Prev Identifier | Term MulOp_factor 
-Factor -> INTEGER | IDENTIFIER | Prev Identifier
+Expr -> INTEGER | IDENTIFIER | Prev Identifier | Expr AddOp_Term | RParen Expr_Close | Term MulOp_Factor
+Term -> INTEGER  | IDENTIFIER | Prev Identifier | RParen Expr_Close | Term MulOp_factor 
+Factor -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_Close
 
-
+Expr_Close -> Expr LParen
 MulOp_Factor -> MulOp Factor
 AddOp_Term -> AddOp Term 
 

@@ -13,6 +13,12 @@ pub enum TokenType {
     MULOP,
     MODOP,
     DIVOP,
+    EQUALOP, 
+    NOTEQUALOP, 
+    GTHANOP, 
+    LTHANOP, 
+    GETHANOP, 
+    LETHANOP,
     RPAREN,
     LPAREN,
     RBRACKET,
@@ -42,8 +48,8 @@ pub struct ConcattedProductions {
 #[derive(Debug, Clone)]
 pub struct CYKEntry {
     pub symbol: String,
-    pub prev: Option<(usize, usize)>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
-    pub prev1: Option<(usize, usize)>,
+    pub left_prev: Option<(usize, usize)>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
+    pub right_prev: Option<(usize, usize)>,
     pub token: Token,
 }
 
@@ -62,6 +68,12 @@ impl FromStr for TokenType {
             "MULOP" => Ok(TokenType::MULOP),
             "MODOP" => Ok(TokenType::MODOP),
             "DIVOP" => Ok(TokenType::DIVOP),
+            "EQUALOP" => Ok(TokenType::EQUALOP), 
+            "NOTEQUALOP" => Ok(TokenType::NOTEQUALOP),
+            "GTHANOP" => Ok(TokenType::GTHANOP), 
+            "LTHANOP" => Ok(TokenType::LTHANOP), 
+            "GETHANOP" => Ok(TokenType::GETHANOP),
+            "LETHANOP" => Ok(TokenType::LETHANOP), 
             "RPAREN" => Ok(TokenType::RPAREN),
             "LPAREN" => Ok(TokenType::LPAREN),
             "RBRACKET" => Ok(TokenType::RBRACKET),
