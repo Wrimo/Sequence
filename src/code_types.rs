@@ -2,6 +2,7 @@
 pub enum StatementType {
     NONE,
     PRINT,
+    REVEAL,
     ASSIGN,
     IF, 
     BEGIN, 
@@ -17,8 +18,8 @@ pub struct Statement {
 }
 
 pub struct Program { 
-    pub begin_block: Option<Statement>,
-    pub expect_block: Option<Statement>,
+    pub begin: Option<Statement>,
+    pub expect: Option<Statement>,
     pub body: Vec<Statement>,
 }
 

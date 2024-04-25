@@ -1,0 +1,12 @@
+begin { 
+    a <- 1162
+}
+expect a == 2 { 
+    reveal(a)
+}
+if a % 2 == 0 { 
+    a <- a / 2
+}
+if a % 2 == 1 { 
+    a <- 3 * a + 1
+}

@@ -1,4 +1,4 @@
-use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
+use crate::parsing_types::{CYKBacktrack, CYKEntry, ConcattedProductions, Production, Token, TokenType};
 use std::str::FromStr;
 use std::{fs, vec};
 
@@ -164,9 +164,9 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
         None => return Err(()),
     };
 
-    for x in &tokens {
-        println!("{:?}", x);
-    }
+    // for x in &tokens {
+    //     println!("{:?}", x);
+    // }
 
     let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
 
@@ -196,8 +196,14 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
                             if prod.goes_to_nonterminal(&b.symbol, &c.symbol) {
                                 let ent = CYKEntry {
                                     symbol: prod.symbol.clone(),
-                                    left_prev: Some((r, r + t)),
-                                    right_prev: Some((r + t + 1, r + l)),
+                                    left_prev: Some(CYKBacktrack {
+                                        symbol: b.symbol.clone(),
+                                        index: (r, r + t),
+                                    }),
+                                    right_prev: Some(CYKBacktrack {
+                                        symbol: c.symbol.clone(),
+                                        index: (r + t + 1, r + l),
+                                    }),
                                     token: Token {
                                         token_type: TokenType::NONE,
                                     },
@@ -211,16 +217,16 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
             }
         }
     }
-    for i in 0..M.len() {
-        for j in 0..M[i].len() {
-            print!("{{");
-            for x in &M[i][j] {
-                print!("{} ", x.symbol);
-            }
-            print!("}}");
-        }
-        println!();
-    }
+    // for i in 0..M.len() {
+    //     for j in 0..M[i].len() {
+    //         print!("{{");
+    //         for x in &M[i][j] {
+    //             print!("{} ", x.symbol);
+    //         }
+    //         print!("}}");
+    //     }
+    //     println!();
+    // }
     for ent in &M[0][tokens.len() - 1] {
         if ent.symbol == "S" {
             return Ok(M);

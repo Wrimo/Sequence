@@ -10,7 +10,7 @@ use code::run_program;
 fn main() {
     // TODO: add a precprocessing step that turns \n \n \n to \n
     // what I need for Collatz: 
-    // [] equal operator 
+    // [x] equal operator 
     // [] else block 
     // [] loop of program 
     // [] begin block

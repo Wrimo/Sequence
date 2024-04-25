@@ -1,17 +1,20 @@
 # grammar for the language 
 # written in Chomsky Normal Form so the CYK Algorithm will work 
 
-S -> NEWLINE | StatementList StatementEnd | Statement StatementEnd
+S -> NEWLINE | StatementList StatementEnd | Statement StatementEnd | RevealState RevealState2
 
 # statement level constructions
-StatementList -> Statement StatementListRec | PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock
+StatementList -> Statement StatementListRec | PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock | RevealState RevealState2
 StatementListRec -> StatementEnd StatementList
-Statement -> PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock
+Statement -> PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock | RevealState RevealState2
 
 CodeBlock -> CodeBlock1 CodeBlock2
 CodeBlock1 -> RBracket StatementEnd
 CodeBlock2 -> StatementList CodeBlock3
 CodeBlock3 -> StatementEnd LBracket
+
+RevealState -> Reveal RParen
+RevealState2 -> Identifier LParen
 
 PrintState -> PrintKeyword RParen
 PrintState2 -> Expr LParen 
@@ -52,4 +55,5 @@ Int -> INTEGER
 Prev -> PREV
 If -> IF
 Expect -> EXPECT 
+Reveal -> REVEAL
 None -> NONE
