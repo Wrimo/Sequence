@@ -88,11 +88,17 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
                 let mut r: Box<Expression> = rc_generate_expression(m, j);
 
                 match *r {
-                    Expression::ADD(ref mut x, ref mut y)
-                    | Expression::SUB(ref mut x, ref mut y)
-                    | Expression::MUL(ref mut x, ref mut y)
-                    | Expression::DIV(ref mut x, ref mut y)
-                    | Expression::MOD(ref mut x, ref mut y) => {
+                    Expression::ADD(ref mut x, ref _y)
+                    | Expression::SUB(ref mut x, ref _y)
+                    | Expression::MUL(ref mut x, ref _y)
+                    | Expression::DIV(ref mut x, ref _y)
+                    | Expression::MOD(ref mut x, ref _y)
+                    | Expression::EQU(ref mut x, ref _y)
+                    | Expression::NEQU(ref mut x, ref _y)
+                    | Expression::GTH(ref mut x, ref _y)
+                    | Expression::GTHE(ref mut x, ref _y)
+                    | Expression::LTH(ref mut x, ref _y)
+                    | Expression::LTHE(ref mut x, ref _y) => {
                         *x = l;
                         return r;
                     }
@@ -101,12 +107,18 @@ fn rc_generate_expression(m: &Vec<Vec<Vec<CYKEntry>>>, index: (usize, usize)) ->
                 }
 
                 match *l {
-                    Expression::ADD(ref mut x, ref mut _y)
-                    | Expression::SUB(ref mut x, ref mut _y)
-                    | Expression::MUL(ref mut x, ref mut _y)
-                    | Expression::DIV(ref mut x, ref mut _y)
-                    | Expression::MOD(ref mut x, ref mut _y) => {
-                        *_y = r;
+                    Expression::ADD(ref _x, ref mut y)
+                    | Expression::SUB(ref _x, ref mut y)
+                    | Expression::MUL(ref _x, ref mut y)
+                    | Expression::DIV(ref _x, ref mut y)
+                    | Expression::MOD(ref _x, ref mut y)
+                    | Expression::EQU(ref _x, ref mut y)
+                    | Expression::NEQU(ref _x, ref mut y)
+                    | Expression::GTH(ref _x, ref mut y)
+                    | Expression::GTHE(ref _x, ref mut y)
+                    | Expression::LTH(ref _x, ref mut y)
+                    | Expression::LTHE(ref _x, ref mut y) => {
+                        *y = r;
                         return l;
                     }
 

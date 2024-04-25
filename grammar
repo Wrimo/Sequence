@@ -20,14 +20,17 @@ IfState4 -> StatementList IfState5
 IfState5 -> StatementEnd LBracket
 
 # grammar for expressions 
-Expr -> INTEGER | IDENTIFIER | Prev Identifier | Expr AddOp_Term | RParen Expr_Close | Term MulOp_Factor
+Expr -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_CloseExpr | Term MulOp_Factor | Expr1 CompOp_Expr1 | Expr AddOp_Term
+Expr1 -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_CloseExpr | Term MulOp_Factor | Expr1 CompOp_Expr1 
 Term -> INTEGER  | IDENTIFIER | Prev Identifier | RParen Expr_Close | Term MulOp_factor 
 Factor -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_Close
 
 Expr_Close -> Expr LParen
+CompOp_Expr1 -> CompOp Expr1
 MulOp_Factor -> MulOp Factor
 AddOp_Term -> AddOp Term 
 
+CompOp -> EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP
 MulOp -> MULOP | DIVOP | MODOP
 AddOp -> ADDOP | SUBOP
 
