@@ -1,12 +1,29 @@
 use crate::parsing_types::{CYKBacktrack, CYKEntry, ConcattedProductions, Production, Token, TokenType};
 use std::str::FromStr;
 use std::{fs, vec};
+use std::collections::HashMap;
 
 fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     let mut tokens: Vec<Token> = Vec::new();
 
     let mut i = 0;
     let chars: Vec<char> = input.chars().collect();
+
+    let symtbl: HashMap<char, TokenType> = vec![
+        (')', TokenType::LPAREN),
+        ('(', TokenType::RPAREN),
+        ('}', TokenType::LBRACKET),
+        ('{', TokenType::RBRACKET),
+        ('+', TokenType::ADDOP),
+        ('-', TokenType::SUBOP),
+        ('*', TokenType::MULOP),
+        ('%', TokenType::MODOP),
+        ('/', TokenType::DIVOP),
+        ('>', TokenType::GTHANOP),
+        ('<', TokenType::LTHANOP),
+    ]
+    .into_iter()
+    .collect();
 
     while i < chars.len() {
         let chr = chars[i];
@@ -39,28 +56,8 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         } else if chr == '<' && input.chars().nth(i + 1)? == '=' {
             token.token_type = TokenType::LETHANOP;
             i += 1;
-        } else if chr == '(' {
-            token.token_type = TokenType::RPAREN;
-        } else if chr == ')' {
-            token.token_type = TokenType::LPAREN;
-        } else if chr == '}' {
-            token.token_type = TokenType::LBRACKET;
-        } else if chr == '{' {
-            token.token_type = TokenType::RBRACKET;
-        } else if chr == '+' {
-            token.token_type = TokenType::ADDOP;
-        } else if chr == '-' {
-            token.token_type = TokenType::SUBOP;
-        } else if chr == '*' {
-            token.token_type = TokenType::MULOP;
-        } else if chr == '%' {
-            token.token_type = TokenType::MODOP;
-        } else if chr == '/' {
-            token.token_type = TokenType::DIVOP;
-        } else if chr == '>' {
-            token.token_type = TokenType::GTHANOP;
-        } else if chr == '<' {
-            token.token_type = TokenType::LTHANOP;
+        } else if let Some(t) = symtbl.get(&chr) {
+            token.token_type = t.clone();
         } else if chr.is_alphabetic() {
             let mut j = i;
             while j < input.len() - 1 && chars[j + 1].is_alphanumeric() {
