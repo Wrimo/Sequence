@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::env::var;
+// use std::env::var;
 
 use crate::code_types::{Expression, Program, Statement, StatementType};
 use crate::parser::parse;
