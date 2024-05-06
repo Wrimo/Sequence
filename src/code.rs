@@ -314,6 +314,10 @@ pub fn run_program(input: &str) {
         println!("{:?}", i);
     }
     println!("End body\n\n");
+
+    if matches!(program.expect.as_ref(), None) { 
+        println!("WARNING: Running with no expect block, program will not terminate!");
+    }
     if let Some(begin) = program.begin {
         println!("begin is {:?}", begin);
         execute_program(&begin.code_block.unwrap(), &mut memory)
