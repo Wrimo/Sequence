@@ -1,11 +1,12 @@
-mod code;
+mod program;
 mod code_types;
 mod parser;
 mod parsing_types;
+mod executor;
 
 use std::{fs, env, process};
 
-use code::run_program;
+use executor::run_program; 
 
 fn usage(progname: &String) {
     eprintln!("Usage:");
