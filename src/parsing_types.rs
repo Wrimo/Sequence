@@ -51,15 +51,9 @@ pub struct ConcattedProductions {
 #[derive(Debug, Clone)]
 pub struct CYKEntry {
     pub symbol: String,
-    pub left_prev: Option<CYKBacktrack>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
-    pub right_prev: Option<CYKBacktrack>, // TODO: has a bug: I am going back to the whole previous index, not just the specific one that leds to me. Need to store index and symbol 
+    pub left_prev: Option<Box<CYKEntry>>, // store entry the index of table entry that lead to me so we can traverse it. None if terminal.
+    pub right_prev: Option<Box<CYKEntry>>,
     pub token: Token,
-}
-
-#[derive(Debug, Clone)]
-pub struct CYKBacktrack { // not the most optimal to do this 
-    pub symbol: String, 
-    pub index: (usize, usize),
 }
 
 impl FromStr for TokenType {

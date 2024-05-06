@@ -90,18 +90,10 @@ pub fn run_program(input: &str) {
             };
 
             generate_abstract_syntax(
-                &m,
-                &mut body,
-                &mut program,
-                &mut statement,
                 ent.left_prev.as_ref().unwrap().clone(),
-            );
-            generate_abstract_syntax(
-                &m,
                 &mut body,
                 &mut program,
                 &mut statement,
-                ent.right_prev.as_ref().unwrap().clone(),
             );
             program.body = body;
             break;

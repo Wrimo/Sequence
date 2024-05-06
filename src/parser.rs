@@ -1,4 +1,4 @@
-use crate::parsing_types::{CYKBacktrack, CYKEntry, ConcattedProductions, Production, Token, TokenType};
+use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
 use std::str::FromStr;
 use std::{fs, vec};
 use std::collections::HashMap;
@@ -203,14 +203,8 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
                             if prod.goes_to_nonterminal(&b.symbol, &c.symbol) {
                                 let ent = CYKEntry {
                                     symbol: prod.symbol.clone(),
-                                    left_prev: Some(CYKBacktrack {
-                                        symbol: b.symbol.clone(),
-                                        index: (r, r + t),
-                                    }),
-                                    right_prev: Some(CYKBacktrack {
-                                        symbol: c.symbol.clone(),
-                                        index: (r + t + 1, r + l),
-                                    }),
+                                    left_prev: Some(Box::new(b.clone())),
+                                    right_prev: Some(Box::new(c.clone())),
                                     token: Token {
                                         token_type: TokenType::NONE,
                                     },

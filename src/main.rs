@@ -15,13 +15,15 @@ fn usage(progname: &String) {
 }
 
 fn main() {
-    // TODO: add a precprocessing step that turns \n \n \n to \n
-    // what I need for Collatz:
+    // TODO: 
     // [x] equal operator
     // [] else block
-    // [] loop of program
-    // [] begin block
-    // [] expect block
+    // [x] loop of program
+    // [x] begin block
+    // [x] expect block
+    // [] better error messages
+    // BUGS: 
+    // [] a <- 12 + 12 * 12 fails the parser 
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
