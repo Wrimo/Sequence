@@ -1,69 +1,76 @@
-use crate::parsing_types::{CYKBacktrack, CYKEntry, ConcattedProductions, Production, Token, TokenType};
+use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
 use std::str::FromStr;
 use std::{fs, vec};
+use std::collections::HashMap;
 
 fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
-    let mut tokens: Vec<Token> = Vec::new();
+    let symtbl: HashMap<&str, TokenType> = vec![
+        ("<-", TokenType::ASSIGNMENT),
+        ("==", TokenType::EQUALOP),
+        ("!=", TokenType::NOTEQUALOP),
+        (">=", TokenType::GETHANOP),
+        ("<=", TokenType::LETHANOP),
+        ("\n", TokenType::NEWLINE),
+        (";", TokenType::SEMICOLON),
+        (")", TokenType::LPAREN),
+        ("(", TokenType::RPAREN),
+        ("}", TokenType::LBRACKET),
+        ("{", TokenType::RBRACKET),
+        ("+", TokenType::ADDOP),
+        ("-", TokenType::SUBOP),
+        ("*", TokenType::MULOP),
+        ("%", TokenType::MODOP),
+        ("/", TokenType::DIVOP),
+        (">", TokenType::GTHANOP),
+        ("<", TokenType::LTHANOP),
+    ]
+    .into_iter()
+    .collect();
 
-    let mut i = 0;
+    // The maximum length of a key in the symtbl.
+    let max_symlen = symtbl
+        .keys()
+        .map(|k| k.len())
+        .max()
+        .unwrap_or(0);
+
+    // Check if a string slice from the input is a
+    // symbol in the symtbl.
+    let is_sym = |i: &mut usize, max_symlen: usize| {
+        for j in (0..max_symlen).rev() {
+            if *i+j < input.len() {
+                if let Some(t) = symtbl.get(&input[*i..=*i+j]) {
+                    *i += j;
+                    return Some(t)
+                }
+            }
+        }
+        // Not a symbol
+        None
+    };
+
+    let mut tokens: Vec<Token> = Vec::new();
     let chars: Vec<char> = input.chars().collect();
+    let mut i = 0;
 
     while i < chars.len() {
         let chr = chars[i];
-        let mut token = Token {
-            token_type: TokenType::NONE,
-        };
 
         if chr == ' ' || chr == '\t' {
             i += 1;
             continue;
         }
-        // would be nice to replace all the operators/keywords with a lookup table
-        if chr == '\n' {
-            token.token_type = TokenType::NEWLINE;
-        }
-        if chr == ';' {
-            token.token_type = TokenType::SEMICOLON;
-        } else if chr == '<' && input.chars().nth(i + 1)? == '-' {
-            token.token_type = TokenType::ASSIGNMENT;
-            i += 1;
-        } else if chr == '=' && input.chars().nth(i + 1)? == '=' {
-            token.token_type = TokenType::EQUALOP;
-            i += 1;
-        } else if chr == '!' && input.chars().nth(i + 1)? == '=' {
-            token.token_type = TokenType::NOTEQUALOP;
-            i += 1;
-        } else if chr == '>' && input.chars().nth(i + 1)? == '=' {
-            token.token_type = TokenType::GETHANOP;
-            i += 1;
-        } else if chr == '<' && input.chars().nth(i + 1)? == '=' {
-            token.token_type = TokenType::LETHANOP;
-            i += 1;
-        } else if chr == '(' {
-            token.token_type = TokenType::RPAREN;
-        } else if chr == ')' {
-            token.token_type = TokenType::LPAREN;
-        } else if chr == '}' {
-            token.token_type = TokenType::LBRACKET;
-        } else if chr == '{' {
-            token.token_type = TokenType::RBRACKET;
-        } else if chr == '+' {
-            token.token_type = TokenType::ADDOP;
-        } else if chr == '-' {
-            token.token_type = TokenType::SUBOP;
-        } else if chr == '*' {
-            token.token_type = TokenType::MULOP;
-        } else if chr == '%' {
-            token.token_type = TokenType::MODOP;
-        } else if chr == '/' {
-            token.token_type = TokenType::DIVOP;
-        } else if chr == '>' {
-            token.token_type = TokenType::GTHANOP;
-        } else if chr == '<' {
-            token.token_type = TokenType::LTHANOP;
-        } else if chr.is_alphabetic() {
+
+        let mut token = Token {
+            token_type: TokenType::NONE,
+        };
+
+        // is_sym will handle incrementing `i`.
+        if let Some(t) = is_sym(&mut i, max_symlen) {
+            token.token_type = t.clone();
+        } else if chr.is_alphabetic() || chr == '_' {
             let mut j = i;
-            while j < input.len() - 1 && chars[j + 1].is_alphanumeric() {
+            while j < input.len() - 1 && (chars[j + 1].is_alphanumeric() || chars[j+1] == '_') {
                 j += 1;
                 if let Ok(x) = TokenType::from_str(&input[i..j + 1].to_uppercase()) {
                     token.token_type = x;
@@ -196,14 +203,8 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
                             if prod.goes_to_nonterminal(&b.symbol, &c.symbol) {
                                 let ent = CYKEntry {
                                     symbol: prod.symbol.clone(),
-                                    left_prev: Some(CYKBacktrack {
-                                        symbol: b.symbol.clone(),
-                                        index: (r, r + t),
-                                    }),
-                                    right_prev: Some(CYKBacktrack {
-                                        symbol: c.symbol.clone(),
-                                        index: (r + t + 1, r + l),
-                                    }),
+                                    left_prev: Some(Box::new(b.clone())),
+                                    right_prev: Some(Box::new(c.clone())),
                                     token: Token {
                                         token_type: TokenType::NONE,
                                     },
