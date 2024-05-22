@@ -99,7 +99,7 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
 fn get_productions() -> Vec<Production> {
     let mut productions: Vec<Production> = Vec::new();
 
-    let grammar = fs::read_to_string("grammar").unwrap();
+    let grammar = fs::read_to_string("grammar.cnf").unwrap();
     for line in grammar.split("\n") {
         let words: Vec<&str> = line.split_whitespace().collect();
 
@@ -228,7 +228,7 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
     //     println!();
     // }
     for ent in &M[0][tokens.len() - 1] {
-        if ent.symbol == "S" {
+        if ent.symbol == "<$S>" {
             return Ok(M);
         }
     }

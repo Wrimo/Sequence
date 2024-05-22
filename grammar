@@ -1,59 +1,21 @@
-# grammar for the language 
-# written in Chomsky Normal Form so the CYK Algorithm will work 
-
-S -> NEWLINE | StatementList StatementEnd | Statement StatementEnd | RevealState RevealState2
+<S> ::= <StatementList> NEWLINE | NEWLINE
 
 # statement level constructions
-StatementList -> Statement StatementListRec | PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock | RevealState RevealState2
-StatementListRec -> StatementEnd StatementList
-Statement -> PrintState PrintState2 | AssignState Expr | IfState CodeBlock | BeginState CodeBlock | ExpectState CodeBlock | RevealState RevealState2
+<StatementList> ::= <Statement> NEWLINE <StatementList> | <Statement>
+<Statement> ::= <PrintState> | <AssignState> | <IfState> | <BeginState> | <ExpectState> | <RevealState>
+<CodeBlock> ::= RBRACKET NEWLINE <StatementList> NEWLINE LBRACKET
+<RevealState> ::= REVEAL RPAREN IDENTIFIER LPAREN
+<PrintState> ::= PRINT RPAREN <Expr> LPAREN
+<AssignState> ::= IDENTIFIER ASSIGNMENT <Expr>
+<IfState> ::= IF <Expr> <CodeBlock>
+<BeginState> ::= BEGIN <CodeBlock>
+<ExpectState> ::= EXPECT <Expr> <CodeBlock>
 
-CodeBlock -> CodeBlock1 CodeBlock2
-CodeBlock1 -> RBracket StatementEnd
-CodeBlock2 -> StatementList CodeBlock3
-CodeBlock3 -> StatementEnd LBracket
-
-RevealState -> Reveal RParen
-RevealState2 -> Identifier LParen
-
-PrintState -> PrintKeyword RParen
-PrintState2 -> Expr LParen 
-
-AssignState -> Identifier Assign
-
-IfState -> If Expr
-
-BeginState -> BEGIN
-ExpectState -> Expect Expr 
-
-# grammar for expressions 
-Expr -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_CloseExpr | Term MulOp_Factor | Expr1 CompOp_Expr1 | Expr AddOp_Term
-Expr1 -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_CloseExpr | Term MulOp_Factor | Expr1 CompOp_Expr1 
-Term -> INTEGER  | IDENTIFIER | Prev Identifier | RParen Expr_Close | Term MulOp_factor 
-Factor -> INTEGER | IDENTIFIER | Prev Identifier | RParen Expr_Close
-
-Expr_Close -> Expr LParen
-CompOp_Expr1 -> CompOp Expr1
-MulOp_Factor -> MulOp Factor
-AddOp_Term -> AddOp Term 
-
-CompOp -> EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP
-MulOp -> MULOP | DIVOP | MODOP
-AddOp -> ADDOP | SUBOP
-
-
-# simple nonterminals to encode terminals (allows them to be concatted)
-RBracket -> RBRACKET 
-LBracket -> LBRACKET
-RParen -> RPAREN 
-LParen -> LPAREN 
-Identifier -> IDENTIFIER
-PrintKeyword -> PRINT
-StatementEnd -> NEWLINE 
-Assign -> ASSIGNMENT
-Int -> INTEGER
-Prev -> PREV
-If -> IF
-Expect -> EXPECT 
-Reveal -> REVEAL
-None -> NONE
+# grammar for expressions
+<Expr> ::= <Expr> <CompOp> <Expr1> | <Expr1>
+<Expr1> ::= <Expr1> <AddOp> <Term> | <Term>
+<Term> ::= <Term> <MulOp> <Factor> | <Factor>
+<Factor> ::= INTEGER | IDENTIFIER | PREV IDENTIFIER | RPAREN <Expr> LPAREN
+<CompOp> ::= EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP
+<MulOp> ::= MULOP | DIVOP | MODOP
+<AddOp> ::= ADDOP | SUBOP
