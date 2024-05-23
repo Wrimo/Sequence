@@ -9,6 +9,15 @@ pub enum StatementType {
     EXPECT,
 }
 
+impl StatementType { 
+    pub fn has_code_block(&self) -> bool { 
+        match self { 
+            StatementType::IF | StatementType::BEGIN | StatementType::EXPECT => true,
+            _ => false
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Statement {
     pub statement_type: StatementType,
@@ -16,6 +25,7 @@ pub struct Statement {
     pub code_block: Option<Vec<Statement>>, 
     pub expr: Option<Box<Expression>>,
 }
+
 
 pub struct Program { 
     pub begin: Option<Statement>,

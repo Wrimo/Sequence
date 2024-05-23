@@ -184,7 +184,7 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
                     symbol: grammar[r].symbol.clone(),
                     left_prev: None,
                     right_prev: None,
-                    token: tokens[i].clone(), // is there a potential error since tokens gets associated with productions that could go to then, not ones of do - what if two terminals from one terminal?
+                    token: tokens[i].clone(),
                 };
                 M[i][i].push(ent);
             }

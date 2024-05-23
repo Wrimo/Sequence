@@ -81,7 +81,7 @@ pub fn run_program(input: &str) {
     };
     let mut body: Vec<Statement> = Vec::new();
     for ent in &m[0][m.len() - 1] {
-        if ent.symbol == "S" {
+        if ent.symbol == "<$S>" {
             let mut statement: Statement = Statement {
                 statement_type: StatementType::NONE,
                 var_name: None,
@@ -90,7 +90,7 @@ pub fn run_program(input: &str) {
             };
 
             generate_abstract_syntax(
-                ent.left_prev.as_ref().unwrap().clone(),
+                Box::new(ent.clone()),
                 &mut body,
                 &mut program,
                 &mut statement,
@@ -100,16 +100,16 @@ pub fn run_program(input: &str) {
         }
     }
     let mut memory: HashMap<String, Vec<i32>> = HashMap::new();
-    for i in &program.body {
-        println!("{:?}", i);
-    }
-    println!("End body\n\n");
+
+    // println!("program length: {}\n\n", program.body.len());
+    // for i in &program.body {
+    //     println!("{:?}", i);
+    // }
 
     if matches!(program.expect.as_ref(), None) { 
         println!("WARNING: Running with no expect block, program will not terminate!");
     }
     if let Some(begin) = program.begin {
-        println!("begin is {:?}", begin);
         execute_program(&begin.code_block.unwrap(), &mut memory)
     }
     loop {

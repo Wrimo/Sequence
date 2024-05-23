@@ -1,5 +1,5 @@
 use crate::code_types::{Expression, Program, Statement, StatementType};
-use crate::parsing_types::{CYKEntry, TokenType};
+use crate::parsing_types::{CYKEntry, Token, TokenType};
 
 pub fn generate_abstract_syntax(
     start: Box<CYKEntry>,
@@ -17,97 +17,62 @@ fn rc_generate_abstract_syntax(
     program: &mut Program,
     statement: &mut Statement,
 ) {
-    println!("{}", production.symbol);
-    match production.symbol.as_str() {
-        // handle nonterminals
-        "AssignState" => {
-            statement.reset();
-            statement.statement_type = StatementType::ASSIGN;
-        }
-        "PrintState" => {
-            statement.reset();
-            statement.statement_type = StatementType::PRINT;
-        }
-        "IfState" => {
-            statement.reset();
-            statement.statement_type = StatementType::IF;
-        }
+    let symbol = production.symbol.clone();
+    // println!("{}", symbol);
 
-        "BeginState" => {
-            statement.reset();
-            statement.statement_type = StatementType::BEGIN;
-        }
-
-        "ExpectState" => {
-            statement.reset();
-            statement.statement_type = StatementType::EXPECT;
-        }
-
-        "RevealState" => {
-            statement.reset();
-            statement.statement_type = StatementType::REVEAL;
-        }
-
-        "CodeBlock2" => {
-            // according to the grammar, IfState4 is the one with the StatementList
-            let mut cur_state: Statement = statement.clone();
-            cur_state.code_block = Some(Vec::new());
-
-            if let Some(ref mut block) = cur_state.code_block {
-                rc_generate_abstract_syntax(
-                    production.left_prev.unwrap(),
-                    block,
-                    program,
-                    statement,
-                );
-                rc_generate_abstract_syntax(
-                    production.right_prev.unwrap(),
-                    block,
-                    program,
-                    statement,
-                );
-            }
-
-            match cur_state.statement_type {
-                StatementType::EXPECT => program.expect = Some(cur_state),
-                StatementType::BEGIN => program.begin = Some(cur_state),
-                _ => code_block.push(cur_state),
-            }
-            return;
-        }
-        "Expr" => {
-            statement.expr = Some(generate_expression(production));
-            return;
-        }
-
-        _ => {} // should add error case here
+    if symbol == "<Expr>" { 
+        statement.expr = Some(generate_expression(production));
+        return;
     }
+
     match (&production.left_prev, &production.right_prev) {
+        // nonterminals
         (Some(i), Some(j)) => {
+            // cringe awful solution to hardcode that, but just checking for CodeBlock which trigger this
+            // code multiple times. would like to make a better approach, but might require moving away 
+            // from a cnf grammar and hence rewriting the whole parser
+            if symbol == "<$02<CodeBlock>>" && statement.statement_type.has_code_block() {
+                let mut cur_state: Statement = statement.clone();
+                cur_state.code_block = Some(Vec::new());    
+                if let Some(ref mut block) = cur_state.code_block {
+                    rc_generate_abstract_syntax(production.left_prev.unwrap(), block, program, statement);
+                    rc_generate_abstract_syntax(production.right_prev.unwrap(), block, program, statement);
+                }
+
+                match cur_state.statement_type {
+                    StatementType::EXPECT => program.expect = Some(cur_state),
+                    StatementType::BEGIN => program.begin = Some(cur_state),
+                    _ => code_block.push(cur_state),
+                }
+                return;
+            } 
             rc_generate_abstract_syntax(i.clone(), code_block, program, statement);
             rc_generate_abstract_syntax(j.clone(), code_block, program, statement);
         }
+        // terminals
         _ => {
-            // handle terminals, equivalent to token
-
             match &production.token.token_type {
                 TokenType::NEWLINE => {
                     // only want to push statements here that do not have corresponding code blocks
-                    match statement.statement_type {
-                        StatementType::ASSIGN | StatementType::PRINT | StatementType::REVEAL => {
-                            code_block.push(statement.clone());
-                            statement.reset();
-                        }
-                        _ => {}
+                    if statement.statement_type != StatementType::NONE && !statement.statement_type.has_code_block() {
+                        code_block.push(statement.clone());
+                        statement.reset();
                     }
                 }
+
+                TokenType::BEGIN => statement.statement_type = StatementType::BEGIN,
+                TokenType::EXPECT => statement.statement_type = StatementType::EXPECT,
+                TokenType::IF => statement.statement_type = StatementType::IF,
+                TokenType::ASSIGNMENT => statement.statement_type = StatementType::ASSIGN,
+                TokenType::PRINT => statement.statement_type = StatementType::PRINT,
+                TokenType::REVEAL => statement.statement_type = StatementType::REVEAL,
                 TokenType::IDENTIFIER(s) => statement.var_name = Some(s.clone()),
+
                 _ => {}
             }
             return;
         }
     }
-    return;
 }
 
 fn generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
@@ -115,6 +80,7 @@ fn generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
 }
 
 fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
+    // println!("{:?}", production.symbol);
     match (&production.left_prev, &production.right_prev) {
         (Some(i), Some(j)) => {
             let mut l: Box<Expression> = rc_generate_expression(i.clone());
@@ -170,72 +136,19 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 TokenType::INTEGER(x) => return Box::new(Expression::INTEGER(x.clone())),
                 TokenType::IDENTIFIER(s) => return Box::new(Expression::IDENTIFIER(s.clone())),
 
-                TokenType::ADDOP => {
-                    return Box::new(Expression::ADD(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::SUBOP => {
-                    return Box::new(Expression::SUB(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::MULOP => {
-                    return Box::new(Expression::MUL(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::DIVOP => {
-                    return Box::new(Expression::DIV(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::MODOP => {
-                    return Box::new(Expression::MOD(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::EQUALOP => {
-                    return Box::new(Expression::EQU(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
+                TokenType::ADDOP => return Box::new(Expression::ADD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::SUBOP => return Box::new(Expression::SUB(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::MULOP => return Box::new(Expression::MUL(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::DIVOP => return Box::new(Expression::DIV(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::MODOP => return Box::new(Expression::MOD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::EQUALOP => return Box::new(Expression::EQU(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::NOTEQUALOP => {
-                    return Box::new(Expression::NEQU(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
+                    return Box::new(Expression::NEQU(Box::new(Expression::NONE), Box::new(Expression::NONE)))
                 }
-                TokenType::GTHANOP => {
-                    return Box::new(Expression::GTH(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::GETHANOP => {
-                    return Box::new(Expression::GTHE(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::LTHANOP => {
-                    return Box::new(Expression::LTH(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
-                TokenType::LETHANOP => {
-                    return Box::new(Expression::LTHE(
-                        Box::new(Expression::NONE),
-                        Box::new(Expression::NONE),
-                    ))
-                }
+                TokenType::GTHANOP => return Box::new(Expression::GTH(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::GETHANOP => return Box::new(Expression::GTHE(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::LTHANOP => return Box::new(Expression::LTH(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::LETHANOP => return Box::new(Expression::LTHE(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::PREV => return Box::new(Expression::PREV(String::from(""))),
                 _ => {}
             };
