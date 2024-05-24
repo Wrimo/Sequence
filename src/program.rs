@@ -1,5 +1,5 @@
 use crate::code_types::{Expression, Program, Statement, StatementType};
-use crate::parsing_types::{CYKEntry, Token, TokenType};
+use crate::parsing_types::{CYKEntry, TokenType};
 
 pub fn generate_abstract_syntax(
     start: Box<CYKEntry>,

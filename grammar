@@ -7,7 +7,10 @@
 <RevealState> ::= REVEAL RPAREN IDENTIFIER LPAREN
 <PrintState> ::= PRINT RPAREN <Expr> LPAREN
 <AssignState> ::= IDENTIFIER ASSIGNMENT <Expr>
-<IfState> ::= IF <Expr> <CodeBlock>
+<IfState> ::= IF <Expr> <CodeBlock> 
+
+# | IF <Expr> <CodeBlock> <ElseList>
+
 <BeginState> ::= BEGIN <CodeBlock>
 <ExpectState> ::= EXPECT <Expr> <CodeBlock>
 

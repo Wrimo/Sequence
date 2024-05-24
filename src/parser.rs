@@ -1,7 +1,8 @@
 use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
+use crate::user_options::USER_OPTIONS;
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::{fs, vec};
-use std::collections::HashMap;
 
 fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     let symtbl: HashMap<&str, TokenType> = vec![
@@ -28,20 +29,16 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     .collect();
 
     // The maximum length of a key in the symtbl.
-    let max_symlen = symtbl
-        .keys()
-        .map(|k| k.len())
-        .max()
-        .unwrap_or(0);
+    let max_symlen = symtbl.keys().map(|k| k.len()).max().unwrap_or(0);
 
     // Check if a string slice from the input is a
     // symbol in the symtbl.
     let is_sym = |i: &mut usize, max_symlen: usize| {
         for j in (0..max_symlen).rev() {
-            if *i+j < input.len() {
-                if let Some(t) = symtbl.get(&input[*i..=*i+j]) {
+            if *i + j < input.len() {
+                if let Some(t) = symtbl.get(&input[*i..=*i + j]) {
                     *i += j;
-                    return Some(t)
+                    return Some(t);
                 }
             }
         }
@@ -70,7 +67,7 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             token.token_type = t.clone();
         } else if chr.is_alphabetic() || chr == '_' {
             let mut j = i;
-            while j < input.len() - 1 && (chars[j + 1].is_alphanumeric() || chars[j+1] == '_') {
+            while j < input.len() - 1 && (chars[j + 1].is_alphanumeric() || chars[j + 1] == '_') {
                 j += 1;
                 if let Ok(x) = TokenType::from_str(&input[i..j + 1].to_uppercase()) {
                     token.token_type = x;
@@ -171,12 +168,13 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
         None => return Err(()),
     };
 
-    // for x in &tokens {
-    //     println!("{:?}", x);
-    // }
+    if USER_OPTIONS.lock().unwrap().debug {
+        for x in &tokens {
+            println!("{:?}", x);
+        }
+    }
 
     let mut M: Vec<Vec<Vec<CYKEntry>>> = vec![vec![Vec::new(); tokens.len()]; tokens.len()];
-
     for i in 0..tokens.len() {
         for r in 0..grammar.len() {
             if grammar[r].goes_to_terminal(&tokens[i]) {
@@ -218,16 +216,19 @@ pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
             }
         }
     }
-    // for i in 0..M.len() {
-    //     for j in 0..M[i].len() {
-    //         print!("{{");
-    //         for x in &M[i][j] {
-    //             print!("{} ", x.symbol);
-    //         }
-    //         print!("}}");
-    //     }
-    //     println!();
-    // }
+    if USER_OPTIONS.lock().unwrap().debug {
+        for i in 0..M.len() {
+            for j in 0..M[i].len() {
+                print!("{{");
+                for x in &M[i][j] {
+                    print!("{} ", x.symbol);
+                }
+                print!("}}");
+            }
+            println!();
+        }
+    }
+
     for ent in &M[0][tokens.len() - 1] {
         if ent.symbol == "<$S>" {
             return Ok(M);

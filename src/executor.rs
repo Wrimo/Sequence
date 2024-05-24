@@ -1,7 +1,8 @@
-use crate::parser::parse;
-use std::collections::HashMap;
 use crate::code_types::{Expression, Program, Statement, StatementType};
-use crate::program::generate_abstract_syntax; 
+use crate::parser::parse;
+use crate::program::generate_abstract_syntax;
+use crate::user_options::USER_OPTIONS;
+use std::collections::HashMap;
 
 fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<i32>>) -> i32 {
     match *expr {
@@ -89,24 +90,21 @@ pub fn run_program(input: &str) {
                 code_block: None,
             };
 
-            generate_abstract_syntax(
-                Box::new(ent.clone()),
-                &mut body,
-                &mut program,
-                &mut statement,
-            );
+            generate_abstract_syntax(Box::new(ent.clone()), &mut body, &mut program, &mut statement);
             program.body = body;
             break;
         }
     }
     let mut memory: HashMap<String, Vec<i32>> = HashMap::new();
 
-    // println!("program length: {}\n\n", program.body.len());
-    // for i in &program.body {
-    //     println!("{:?}", i);
-    // }
+    if USER_OPTIONS.lock().unwrap().debug {
+        println!("program length: {}\n\n", program.body.len());
+        for i in &program.body {
+            println!("{:?}", i);
+        }
+    }
 
-    if matches!(program.expect.as_ref(), None) { 
+    if matches!(program.expect.as_ref(), None) {
         println!("WARNING: Running with no expect block, program will not terminate!");
     }
     if let Some(begin) = program.begin {
