@@ -1,11 +1,14 @@
 <S> -> <StatementList> <$NEWLINE> | NEWLINE 
-<StatementList> -> <Statement> <$01<StatementList>> | <$PRINT> <$01<PrintState>> | <$IDENTIFIER> <$01<AssignState>> | <$IF> <$01<IfState>> | <$BEGIN> <CodeBlock> | <$EXPECT> <$01<ExpectState>> | <$REVEAL> <$01<RevealState>> 
-<Statement> -> <$PRINT> <$01<PrintState>> | <$IDENTIFIER> <$01<AssignState>> | <$IF> <$01<IfState>> | <$BEGIN> <CodeBlock> | <$EXPECT> <$01<ExpectState>> | <$REVEAL> <$01<RevealState>> 
+<StatementList> -> <Statement> <$01<StatementList>> | <$PRINT> <$01<PrintState>> | <$IDENTIFIER> <$01<AssignState>> | <$IF> <$01<IfState>> | <$IF> <$11<IfState>> | <$BEGIN> <CodeBlock> | <$EXPECT> <$01<ExpectState>> | <$REVEAL> <$01<RevealState>> 
+<Statement> -> <$PRINT> <$01<PrintState>> | <$IDENTIFIER> <$01<AssignState>> | <$IF> <$01<IfState>> | <$IF> <$11<IfState>> | <$BEGIN> <CodeBlock> | <$EXPECT> <$01<ExpectState>> | <$REVEAL> <$01<RevealState>> 
 <CodeBlock> -> <$RBRACKET> <$01<CodeBlock>> 
 <RevealState> -> <$REVEAL> <$01<RevealState>> 
 <PrintState> -> <$PRINT> <$01<PrintState>> 
 <AssignState> -> <$IDENTIFIER> <$01<AssignState>> 
-<IfState> -> <$IF> <$01<IfState>> 
+<IfState> -> <$IF> <$01<IfState>> | <$IF> <$11<IfState>> 
+<ElseList> -> <ElseIf> <ElseList> | <$VERTICALBAR> <$01<ElseIf>> | <$VERTICALBAR> <CodeBlock> 
+<ElseIf> -> <$VERTICALBAR> <$01<ElseIf>> 
+<Else> -> <$VERTICALBAR> <CodeBlock> 
 <BeginState> -> <$BEGIN> <CodeBlock> 
 <ExpectState> -> <$EXPECT> <$01<ExpectState>> 
 <Expr> -> <Expr> <$01<Expr>> | <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$31<Factor>> 
@@ -26,6 +29,7 @@
 <$PRINT> -> PRINT 
 <$ASSIGNMENT> -> ASSIGNMENT 
 <$IF> -> IF 
+<$VERTICALBAR> -> VERTICALBAR 
 <$BEGIN> -> BEGIN 
 <$EXPECT> -> EXPECT 
 <$PREV> -> PREV 
@@ -39,6 +43,9 @@
 <$02<PrintState>> -> <Expr> <$LPAREN> 
 <$01<AssignState>> -> <$ASSIGNMENT> <Expr> 
 <$01<IfState>> -> <Expr> <CodeBlock> 
+<$11<IfState>> -> <Expr> <$12<IfState>> 
+<$12<IfState>> -> <CodeBlock> <ElseList> 
+<$01<ElseIf>> -> <Expr> <CodeBlock> 
 <$01<ExpectState>> -> <Expr> <CodeBlock> 
 <$01<Expr>> -> <CompOp> <Expr1> 
 <$01<Expr1>> -> <AddOp> <Term> 

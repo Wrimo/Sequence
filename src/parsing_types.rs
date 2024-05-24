@@ -24,6 +24,7 @@ pub enum TokenType {
     RBRACKET,
     LBRACKET,
     SEMICOLON,
+    VERTICALBAR,
     NEWLINE,
     PRINT,
     PREV,
@@ -89,6 +90,7 @@ impl FromStr for TokenType {
             "REVEAL" => Ok(TokenType::REVEAL),
             "EXPECT" => Ok(TokenType::EXPECT),
             "IF" => Ok(TokenType::IF),
+            "VERTICALBAR" => Ok(TokenType::VERTICALBAR),
             _ => return Err(()),
         }
     }

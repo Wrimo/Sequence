@@ -24,6 +24,7 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         ("/", TokenType::DIVOP),
         (">", TokenType::GTHANOP),
         ("<", TokenType::LTHANOP),
+        ("|", TokenType::VERTICALBAR),
     ]
     .into_iter()
     .collect();
