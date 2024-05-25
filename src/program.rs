@@ -1,6 +1,6 @@
 use crate::code_types::{Expression, Program, Statement, StatementType};
 use crate::parsing_types::{CYKEntry, TokenType};
-use crate::user_options::{self, USER_OPTIONS};
+use crate::user_options::USER_OPTIONS;
 
 pub fn generate_abstract_syntax(
     start: Box<CYKEntry>,
@@ -21,7 +21,7 @@ fn rc_generate_abstract_syntax(
     let symbol = production.symbol.clone();
 
     if USER_OPTIONS.lock().unwrap().debug {
-        println!("{}", symbol);
+        println!("{}", symbol[1..symbol.len() - 1].to_string());
     }
 
     if symbol == "<Expr>" {
@@ -90,44 +90,61 @@ fn generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
 }
 
 fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
+    if USER_OPTIONS.lock().unwrap().debug {
+        println!("{}", production.symbol);
+    }
     match (&production.left_prev, &production.right_prev) {
         (Some(i), Some(j)) => {
             let mut l: Box<Expression> = rc_generate_expression(i.clone());
             let mut r: Box<Expression> = rc_generate_expression(j.clone());
 
+            // if either one has an empty slot, place the other one in it, right side gets priority
+
+            println!("L: {:?} \nR: {:?}", l, r);
+
             match *r {
-                Expression::ADD(ref mut x, ref _y)
-                | Expression::SUB(ref mut x, ref _y)
-                | Expression::MUL(ref mut x, ref _y)
-                | Expression::DIV(ref mut x, ref _y)
-                | Expression::MOD(ref mut x, ref _y)
-                | Expression::EQU(ref mut x, ref _y)
-                | Expression::NEQU(ref mut x, ref _y)
-                | Expression::GTH(ref mut x, ref _y)
-                | Expression::GTHE(ref mut x, ref _y)
-                | Expression::LTH(ref mut x, ref _y)
-                | Expression::LTHE(ref mut x, ref _y) => {
-                    *x = l;
-                    return r;
+                Expression::ADD(ref mut x, ref mut y)
+                | Expression::SUB(ref mut x, ref mut y)
+                | Expression::MUL(ref mut x, ref mut y)
+                | Expression::DIV(ref mut x, ref mut y)
+                | Expression::MOD(ref mut x, ref mut y)
+                | Expression::EQU(ref mut x, ref mut y)
+                | Expression::NEQU(ref mut x, ref mut y)
+                | Expression::GTH(ref mut x, ref mut y)
+                | Expression::GTHE(ref mut x, ref mut y)
+                | Expression::LTH(ref mut x, ref mut y)
+                | Expression::LTHE(ref mut x, ref mut y) => {
+                    if matches!(**x, Expression::NONE) {
+                        *x = l;
+                        return r;
+                    } else if matches!(**y, Expression::NONE) {
+                        *y = l;
+                        return r;
+                    }
                 }
 
                 _ => {}
             }
 
             match *l {
-                Expression::ADD(ref _x, ref mut y)
-                | Expression::SUB(ref _x, ref mut y)
-                | Expression::MUL(ref _x, ref mut y)
-                | Expression::DIV(ref _x, ref mut y)
-                | Expression::MOD(ref _x, ref mut y)
-                | Expression::EQU(ref _x, ref mut y)
-                | Expression::NEQU(ref _x, ref mut y)
-                | Expression::GTH(ref _x, ref mut y)
-                | Expression::GTHE(ref _x, ref mut y)
-                | Expression::LTH(ref _x, ref mut y)
-                | Expression::LTHE(ref _x, ref mut y) => {
-                    *y = r;
-                    return l;
+                Expression::ADD(ref mut x, ref mut y)
+                | Expression::SUB(ref mut x, ref mut y)
+                | Expression::MUL(ref mut x, ref mut y)
+                | Expression::DIV(ref mut x, ref mut y)
+                | Expression::MOD(ref mut x, ref mut y)
+                | Expression::EQU(ref mut x, ref mut y)
+                | Expression::NEQU(ref mut x, ref mut y)
+                | Expression::GTH(ref mut x, ref mut y)
+                | Expression::GTHE(ref mut x, ref mut y)
+                | Expression::LTH(ref mut x, ref mut y)
+                | Expression::LTHE(ref mut x, ref mut y) => {
+                    if matches!(**y, Expression::NONE) {
+                        *y = r;
+                        return l;
+                    } else if matches!(**x, Expression::NONE) {
+                        *x = r;
+                        return l;
+                    }
                 }
 
                 Expression::PREV(ref mut s) => {
