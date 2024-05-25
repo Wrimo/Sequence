@@ -48,7 +48,6 @@ fn rc_generate_abstract_syntax(
                     StatementType::BEGIN => program.begin = Some(cur_state),
                     StatementType::ELSE => {
                         let idx = code_block.len() - 1;
-                        println!("last statement type: {:?}", code_block[idx].statement_type);
                         code_block[idx].alt_code_block = cur_state.code_block;
                         code_block[idx].alt_exp = cur_state.expr;
                     }
