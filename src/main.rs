@@ -27,7 +27,9 @@ fn main() {
     // [] better error messages
     // [] clean up modules
     // BUGS:
-    // [] a <- 12 + 12 * 12 fails the parser
+    // [x] a <- 12 + 12 * 12 fails the parser
+    // [] 2 * 1 + 1 evaluates as 3, but 1 + 1 * 2 evaluates as 2
+    // [] parantheses in expression do not work 
 
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {usage(&args[0])};

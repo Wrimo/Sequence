@@ -1,5 +1,6 @@
 use crate::code_types::{Expression, Program, Statement, StatementType};
 use crate::parsing_types::{CYKEntry, TokenType};
+use crate::user_options::{self, USER_OPTIONS};
 
 pub fn generate_abstract_syntax(
     start: Box<CYKEntry>,
@@ -18,9 +19,12 @@ fn rc_generate_abstract_syntax(
     statement: &mut Statement,
 ) {
     let symbol = production.symbol.clone();
-    // println!("{}", symbol);
 
-    if symbol == "<Expr>" { 
+    if USER_OPTIONS.lock().unwrap().debug {
+        println!("{}", symbol);
+    }
+
+    if symbol == "<Expr>" {
         statement.expr = Some(generate_expression(production));
         return;
     }
@@ -29,11 +33,11 @@ fn rc_generate_abstract_syntax(
         // nonterminals
         (Some(i), Some(j)) => {
             // cringe awful solution to hardcode that, but just checking for CodeBlock which trigger this
-            // code multiple times. would like to make a better approach, but might require moving away 
+            // code multiple times. would like to make a better approach, but might require moving away
             // from a cnf grammar and hence rewriting the whole parser
             if symbol == "<$02<CodeBlock>>" && statement.statement_type.has_code_block() {
                 let mut cur_state: Statement = statement.clone();
-                cur_state.code_block = Some(Vec::new());    
+                cur_state.code_block = Some(Vec::new());
                 if let Some(ref mut block) = cur_state.code_block {
                     rc_generate_abstract_syntax(production.left_prev.unwrap(), block, program, statement);
                     rc_generate_abstract_syntax(production.right_prev.unwrap(), block, program, statement);
@@ -42,10 +46,16 @@ fn rc_generate_abstract_syntax(
                 match cur_state.statement_type {
                     StatementType::EXPECT => program.expect = Some(cur_state),
                     StatementType::BEGIN => program.begin = Some(cur_state),
+                    StatementType::ELSE => {
+                        let idx = code_block.len() - 1;
+                        println!("last statement type: {:?}", code_block[idx].statement_type);
+                        code_block[idx].alt_code_block = cur_state.code_block;
+                        code_block[idx].alt_exp = cur_state.expr;
+                    }
                     _ => code_block.push(cur_state),
                 }
                 return;
-            } 
+            }
             rc_generate_abstract_syntax(i.clone(), code_block, program, statement);
             rc_generate_abstract_syntax(j.clone(), code_block, program, statement);
         }
@@ -67,6 +77,7 @@ fn rc_generate_abstract_syntax(
                 TokenType::PRINT => statement.statement_type = StatementType::PRINT,
                 TokenType::REVEAL => statement.statement_type = StatementType::REVEAL,
                 TokenType::IDENTIFIER(s) => statement.var_name = Some(s.clone()),
+                TokenType::VERTICALBAR => statement.statement_type = StatementType::ELSE,
 
                 _ => {}
             }
@@ -80,7 +91,6 @@ fn generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
 }
 
 fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
-    // println!("{:?}", production.symbol);
     match (&production.left_prev, &production.right_prev) {
         (Some(i), Some(j)) => {
             let mut l: Box<Expression> = rc_generate_expression(i.clone());

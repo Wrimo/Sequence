@@ -4,16 +4,17 @@ pub enum StatementType {
     PRINT,
     REVEAL,
     ASSIGN,
-    IF, 
-    BEGIN, 
+    IF,
+    ELSE,
+    BEGIN,
     EXPECT,
 }
 
-impl StatementType { 
-    pub fn has_code_block(&self) -> bool { 
-        match self { 
-            StatementType::IF | StatementType::BEGIN | StatementType::EXPECT => true,
-            _ => false
+impl StatementType {
+    pub fn has_code_block(&self) -> bool {
+        match self {
+            StatementType::IF | StatementType::ELSE | StatementType::BEGIN | StatementType::EXPECT => true,
+            _ => false,
         }
     }
 }
@@ -22,34 +23,35 @@ impl StatementType {
 pub struct Statement {
     pub statement_type: StatementType,
     pub var_name: Option<String>,
-    pub code_block: Option<Vec<Statement>>, 
+    pub code_block: Option<Vec<Statement>>,
     pub expr: Option<Box<Expression>>,
+    pub alt_code_block: Option<Vec<Statement>>, // do i need to make these a vector of (exp, code_block) for elif?
+    pub alt_exp: Option<Box<Expression>>,
 }
 
-
-pub struct Program { 
+pub struct Program {
     pub begin: Option<Statement>,
     pub expect: Option<Statement>,
     pub body: Vec<Statement>,
 }
 
 #[derive(Clone, Debug)]
-pub enum Expression { 
-    ADD(Box<Expression>, Box<Expression>), 
+pub enum Expression {
+    ADD(Box<Expression>, Box<Expression>),
     SUB(Box<Expression>, Box<Expression>),
-    MUL(Box<Expression>, Box<Expression>), 
-    DIV(Box<Expression>, Box<Expression>), 
-    MOD(Box<Expression>, Box<Expression>), 
-    EQU(Box<Expression>, Box<Expression>), 
-    NEQU(Box<Expression>, Box<Expression>), 
-    GTH(Box<Expression>, Box<Expression>), 
-    GTHE(Box<Expression>, Box<Expression>), 
+    MUL(Box<Expression>, Box<Expression>),
+    DIV(Box<Expression>, Box<Expression>),
+    MOD(Box<Expression>, Box<Expression>),
+    EQU(Box<Expression>, Box<Expression>),
+    NEQU(Box<Expression>, Box<Expression>),
+    GTH(Box<Expression>, Box<Expression>),
+    GTHE(Box<Expression>, Box<Expression>),
     LTH(Box<Expression>, Box<Expression>),
     LTHE(Box<Expression>, Box<Expression>),
-    PREV(String), 
+    PREV(String),
     IDENTIFIER(String),
-    INTEGER(i32), 
-    NONE
+    INTEGER(i32),
+    NONE,
 }
 
 impl Statement {
@@ -57,6 +59,6 @@ impl Statement {
         self.statement_type = StatementType::NONE;
         self.var_name = None;
         self.expr = None;
-        self.code_block = None;  
+        self.code_block = None;
     }
 }
