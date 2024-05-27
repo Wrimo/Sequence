@@ -21,17 +21,20 @@ fn main() {
     // TODO:
     // [x] equal operator
     // [x] else block
-    // [] elif
+    // [x] elif
     // [x] true / false
     // [x] loop of program
     // [x] begin block
     // [x] expect block
+    // [x] floats
+    // [] bools (needed to get comparisons working)
     // [] better error messages
     // [] clean up modules
     // BUGS:
     // [x] a <- 12 + 12 * 12 fails the parser
     // [] 2 * 1 + 1 evaluates as 3, but 1 + 1 * 2 evaluates as 2
     // [] parantheses in expression do not work 
+    // [] 
 
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {usage(&args[0])};
@@ -41,7 +44,6 @@ fn main() {
             _ => {}
         }
     }
-    
 
     let buf = fs::read_to_string(&args[args.len() - 1]).unwrap_or_else(|_| {
         eprintln!("could not read file: {}", args[args.len() - 1]);

@@ -81,11 +81,23 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
 
             i = j;
         } else if chr.is_numeric() {
-            let mut j = i + 1;
-            while j < input.len() && chars[j].is_numeric() {
-                j += 1;
+            let digit_scan = |i: usize, chars: &Vec<char>| { 
+                let mut j = i + 1; 
+                while j < chars.len() && chars[j].is_numeric() { 
+                    j += 1; 
+                }
+                return j;
+            };
+
+            let mut j = digit_scan(i, &chars); 
+            if j < chars.len() && chars[j] == '.' { 
+                j = digit_scan(j, &chars);
+                token.token_type = TokenType::FLOAT(input[i..j].parse().unwrap());
+                
+            } else { 
+                token.token_type = TokenType::INTEGER(input[i..j].parse().unwrap());
             }
-            token.token_type = TokenType::INTEGER(input[i..j].parse().unwrap());
+            
             i = j - 1;
         }
         i += 1;

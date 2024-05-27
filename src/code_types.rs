@@ -10,15 +10,6 @@ pub enum StatementType {
     EXPECT,
 }
 
-impl StatementType {
-    pub fn has_code_block(&self) -> bool {
-        match self {
-            StatementType::IF | StatementType::ELSE | StatementType::BEGIN | StatementType::EXPECT => true,
-            _ => false,
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct Statement {
     pub statement_type: StatementType,
@@ -51,7 +42,29 @@ pub enum Expression {
     PREV(String),
     IDENTIFIER(String),
     INTEGER(i32),
+    FLOAT(f32),
     NONE,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum VariableType { 
+    FLOAT(f32),
+    INTEGER(i32),
+    STRING(String), 
+}
+
+pub struct VarType { 
+    fvale: f32, 
+    ival: i32, 
+}
+
+impl StatementType {
+    pub fn has_code_block(&self) -> bool {
+        match self {
+            StatementType::IF | StatementType::ELSE | StatementType::BEGIN | StatementType::EXPECT => true,
+            _ => false,
+        }
+    }
 }
 
 impl Statement {

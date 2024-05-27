@@ -11,10 +11,10 @@
 <Else> -> <$VERTICALBAR> <CodeBlock> 
 <BeginState> -> <$BEGIN> <CodeBlock> 
 <ExpectState> -> <$EXPECT> <$01<ExpectState>> 
-<Expr> -> <Expr> <$01<Expr>> | <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
-<Expr1> -> <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
-<Term> -> <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
-<Factor> -> INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
+<Expr> -> <Expr> <$01<Expr>> | <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | FLOAT | <$PREV> <$IDENTIFIER> | <$RPAREN> <$51<Factor>> | TRUE | FALSE 
+<Expr1> -> <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | FLOAT | <$PREV> <$IDENTIFIER> | <$RPAREN> <$51<Factor>> | TRUE | FALSE 
+<Term> -> <Term> <$01<Term>> | INTEGER | IDENTIFIER | FLOAT | <$PREV> <$IDENTIFIER> | <$RPAREN> <$51<Factor>> | TRUE | FALSE 
+<Factor> -> INTEGER | IDENTIFIER | FLOAT | <$PREV> <$IDENTIFIER> | <$RPAREN> <$51<Factor>> | TRUE | FALSE 
 <CompOp> -> EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP 
 <MulOp> -> MULOP | DIVOP | MODOP 
 <AddOp> -> ADDOP | SUBOP 
@@ -51,4 +51,4 @@
 <$01<Expr>> -> <CompOp> <Expr1> 
 <$01<Expr1>> -> <AddOp> <Term> 
 <$01<Term>> -> <MulOp> <Factor> 
-<$41<Factor>> -> <Expr> <$LPAREN> 
+<$51<Factor>> -> <Expr> <$LPAREN> 
