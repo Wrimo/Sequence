@@ -25,8 +25,8 @@ pub struct Statement {
     pub var_name: Option<String>,
     pub code_block: Option<Vec<Statement>>,
     pub expr: Option<Box<Expression>>,
-    pub alt_code_block: Option<Vec<Statement>>, // do i need to make these a vector of (exp, code_block) for elif?
-    pub alt_exp: Option<Box<Expression>>,
+    pub alt_code_blocks: Vec<Vec<Statement>>,
+    pub alt_exps: Vec<Box<Expression>>,
 }
 
 pub struct Program {

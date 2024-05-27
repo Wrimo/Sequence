@@ -22,7 +22,7 @@ fn main() {
     // [x] equal operator
     // [x] else block
     // [] elif
-    // [] true / false
+    // [x] true / false
     // [x] loop of program
     // [x] begin block
     // [x] expect block

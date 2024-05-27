@@ -50,13 +50,13 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<i3
                 let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
                 if x >= 1 {
                     execute_program(&statement.code_block.as_ref().unwrap(), memory);
-                } else if let Some(ref exp) = statement.alt_exp { 
-                    if calculate_expression(exp.clone(), memory) >= 1 { 
-                        execute_program(&statement.alt_code_block.as_ref().unwrap(), memory)
+                } else if statement.alt_code_blocks.len() != 0 {
+                    for i in 0..statement.alt_code_blocks.len() {
+                        if i >= statement.alt_exps.len() || calculate_expression(statement.alt_exps[i].clone(), memory) >= 1 {
+                            execute_program(&statement.alt_code_blocks[i], memory);
+                            break;
+                        }
                     }
-                }
-                else if let Some(ref block) = statement.alt_code_block {
-                    execute_program(block, memory);
                 }
             }
 
@@ -67,7 +67,9 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<i3
                 }
             }
 
-            _ => {}
+            _ => {
+                eprintln!("Bad statement {:?}", statement.statement_type);
+            }
         }
     }
 }
@@ -95,8 +97,8 @@ pub fn run_program(input: &str) {
                 var_name: None,
                 expr: None,
                 code_block: None,
-                alt_code_block: None,
-                alt_exp: None,
+                alt_code_blocks: Vec::new(),
+                alt_exps: Vec::new(),
             };
 
             generate_abstract_syntax(Box::new(ent.clone()), &mut body, &mut program, &mut statement);

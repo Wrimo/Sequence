@@ -1,5 +1,7 @@
+use std::io::Cursor;
+
 use crate::code_types::{Expression, Program, Statement, StatementType};
-use crate::parsing_types::{CYKEntry, Token, TokenType};
+use crate::parsing_types::{CYKEntry, TokenType};
 use crate::user_options::USER_OPTIONS;
 
 pub fn generate_abstract_syntax(
@@ -48,8 +50,10 @@ fn rc_generate_abstract_syntax(
                     StatementType::BEGIN => program.begin = Some(cur_state),
                     StatementType::ELSE => {
                         let idx = code_block.len() - 1;
-                        code_block[idx].alt_code_block = cur_state.code_block;
-                        code_block[idx].alt_exp = cur_state.expr;
+                        code_block[idx].alt_code_blocks.push(cur_state.code_block.unwrap().clone());
+                        if let Some(exp) = cur_state.expr { 
+                            code_block[idx].alt_exps.push(exp.clone());
+                        }
                     }
                     _ => code_block.push(cur_state),
                 }
