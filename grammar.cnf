@@ -11,13 +11,14 @@
 <Else> -> <$VERTICALBAR> <CodeBlock> 
 <BeginState> -> <$BEGIN> <CodeBlock> 
 <ExpectState> -> <$EXPECT> <$01<ExpectState>> 
-<Expr> -> <Expr> <$01<Expr>> | <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$31<Factor>> 
-<Expr1> -> <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$31<Factor>> 
-<Term> -> <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$31<Factor>> 
-<Factor> -> INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$31<Factor>> 
+<Expr> -> <Expr> <$01<Expr>> | <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
+<Expr1> -> <Expr1> <$01<Expr1>> | <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
+<Term> -> <Term> <$01<Term>> | INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
+<Factor> -> INTEGER | IDENTIFIER | <$PREV> <$IDENTIFIER> | <$RPAREN> <$41<Factor>> | TRUE | FALSE 
 <CompOp> -> EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP 
 <MulOp> -> MULOP | DIVOP | MODOP 
 <AddOp> -> ADDOP | SUBOP 
+<Bool> -> TRUE | FALSE 
 <$S> -> <StatementList> <$NEWLINE> | NEWLINE 
 <$NEWLINE> -> NEWLINE 
 <$RBRACKET> -> RBRACKET 
@@ -50,4 +51,4 @@
 <$01<Expr>> -> <CompOp> <Expr1> 
 <$01<Expr1>> -> <AddOp> <Term> 
 <$01<Term>> -> <MulOp> <Factor> 
-<$31<Factor>> -> <Expr> <$LPAREN> 
+<$41<Factor>> -> <Expr> <$LPAREN> 

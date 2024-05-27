@@ -1,5 +1,5 @@
 use crate::code_types::{Expression, Program, Statement, StatementType};
-use crate::parsing_types::{CYKEntry, TokenType};
+use crate::parsing_types::{CYKEntry, Token, TokenType};
 use crate::user_options::USER_OPTIONS;
 
 pub fn generate_abstract_syntax(
@@ -99,9 +99,6 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
             let mut r: Box<Expression> = rc_generate_expression(j.clone());
 
             // if either one has an empty slot, place the other one in it, right side gets priority
-
-            println!("L: {:?} \nR: {:?}", l, r);
-
             match *r {
                 Expression::ADD(ref mut x, ref mut y)
                 | Expression::SUB(ref mut x, ref mut y)
@@ -161,6 +158,8 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
             match &production.token.token_type {
                 TokenType::INTEGER(x) => return Box::new(Expression::INTEGER(x.clone())),
                 TokenType::IDENTIFIER(s) => return Box::new(Expression::IDENTIFIER(s.clone())),
+                TokenType::TRUE => return Box::new(Expression::INTEGER(1)), 
+                TokenType::FALSE => return Box::new(Expression::INTEGER(0)),
 
                 TokenType::ADDOP => return Box::new(Expression::ADD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::SUBOP => return Box::new(Expression::SUB(Box::new(Expression::NONE), Box::new(Expression::NONE))),

@@ -21,7 +21,9 @@
 <Expr> ::= <Expr> <CompOp> <Expr1> | <Expr1>
 <Expr1> ::= <Expr1> <AddOp> <Term> | <Term>
 <Term> ::= <Term> <MulOp> <Factor> | <Factor>
-<Factor> ::= INTEGER | IDENTIFIER | PREV IDENTIFIER | RPAREN <Expr> LPAREN
+<Factor> ::= INTEGER | IDENTIFIER | <Bool> | PREV IDENTIFIER | RPAREN <Expr> LPAREN
 <CompOp> ::= EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP
 <MulOp> ::= MULOP | DIVOP | MODOP
 <AddOp> ::= ADDOP | SUBOP
+
+<Bool> ::= TRUE | FALSE

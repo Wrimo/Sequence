@@ -20,7 +20,9 @@ fn usage(progname: &String) {
 fn main() {
     // TODO:
     // [x] equal operator
-    // [] else block
+    // [x] else block
+    // [] elif
+    // [] true / false
     // [x] loop of program
     // [x] begin block
     // [x] expect block
