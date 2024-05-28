@@ -18,11 +18,13 @@
 <ExpectState> ::= EXPECT <Expr> <CodeBlock>
 
 # grammar for expressions
-<Expr> ::= <Expr> <CompOp> <Expr1> | <Expr1>
-<Expr1> ::= <Expr1> <AddOp> <Term> | <Term>
+<Expr> ::= <Expr> <LogOp> <Expr1> | NOT <Expr1> | <Expr1>
+<Expr1> ::= <Expr1> <CompOp> <Expr2> | <Expr2>
+<Expr2> ::= <Expr2> <AddOp> <Term> | <Term>
 <Term> ::= <Term> <MulOp> <Factor> | <Factor>
 <Factor> ::= INTEGER | IDENTIFIER | FLOAT | <Bool> | PREV IDENTIFIER | RPAREN <Expr> LPAREN
 <CompOp> ::= EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP
+<LogOp> ::= AND | OR
 <MulOp> ::= MULOP | DIVOP | MODOP
 <AddOp> ::= ADDOP | SUBOP
 

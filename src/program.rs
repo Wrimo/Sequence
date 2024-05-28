@@ -99,7 +99,7 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
         (Some(i), Some(j)) => {
             let mut l: Box<Expression> = rc_generate_expression(i.clone());
             let mut r: Box<Expression> = rc_generate_expression(j.clone());
-
+            println!("{:?} {:?}", l, r);
             // if either one has an empty slot, place the other one in it, right side gets priority
             match *r {
                 Expression::ADD(ref mut x, ref mut y)
@@ -112,7 +112,9 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 | Expression::GTH(ref mut x, ref mut y)
                 | Expression::GTHE(ref mut x, ref mut y)
                 | Expression::LTH(ref mut x, ref mut y)
-                | Expression::LTHE(ref mut x, ref mut y) => {
+                | Expression::LTHE(ref mut x, ref mut y)
+                | Expression::AND(ref mut x, ref mut y)
+                | Expression::OR(ref mut x, ref mut y) => {
                     if matches!(**x, Expression::NONE) {
                         *x = l;
                         return r;
@@ -136,7 +138,9 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 | Expression::GTH(ref mut x, ref mut y)
                 | Expression::GTHE(ref mut x, ref mut y)
                 | Expression::LTH(ref mut x, ref mut y)
-                | Expression::LTHE(ref mut x, ref mut y) => {
+                | Expression::LTHE(ref mut x, ref mut y) 
+                | Expression::AND(ref mut x, ref mut y)
+                | Expression::OR(ref mut x, ref mut y) => {
                     if matches!(**y, Expression::NONE) {
                         *y = r;
                         return l;
@@ -153,6 +157,11 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                     return l;
                 }
 
+                Expression::NOT(ref mut exp) => { 
+                    *exp = r; 
+                    return l; 
+                }
+
                 _ => {}
             }
         }
@@ -161,8 +170,8 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 TokenType::INTEGER(x) => return Box::new(Expression::INTEGER(x.clone())),
                 TokenType::IDENTIFIER(s) => return Box::new(Expression::IDENTIFIER(s.clone())),
                 TokenType::FLOAT(x) => return Box::new(Expression::FLOAT(x.clone())),
-                TokenType::TRUE => return Box::new(Expression::INTEGER(1)), 
-                TokenType::FALSE => return Box::new(Expression::INTEGER(0)),
+                TokenType::TRUE => return Box::new(Expression::BOOL(true)), 
+                TokenType::FALSE => return Box::new(Expression::BOOL(false)),
 
                 TokenType::ADDOP => return Box::new(Expression::ADD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::SUBOP => return Box::new(Expression::SUB(Box::new(Expression::NONE), Box::new(Expression::NONE))),
@@ -175,8 +184,12 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 TokenType::GETHANOP => return Box::new(Expression::GTHE(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::LTHANOP => return Box::new(Expression::LTH(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::LETHANOP => return Box::new(Expression::LTHE(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::AND => return Box::new(Expression::AND(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::OR => return Box::new(Expression::OR(Box::new(Expression::NONE), Box::new(Expression::NONE))),
+                TokenType::NOT => return Box::new(Expression::NOT(Box::new(Expression::NONE))),
+
                 TokenType::PREV => return Box::new(Expression::PREV(String::from(""))),
-                _ => {}
+                _ => return Box::new(Expression::NONE),
             };
         }
     }

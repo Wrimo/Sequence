@@ -39,23 +39,47 @@ pub enum Expression {
     GTHE(Box<Expression>, Box<Expression>),
     LTH(Box<Expression>, Box<Expression>),
     LTHE(Box<Expression>, Box<Expression>),
+    AND(Box<Expression>, Box<Expression>),
+    OR(Box<Expression>, Box<Expression>),
+    NOT(Box<Expression>),
     PREV(String),
     IDENTIFIER(String),
+    BOOL(bool),
     INTEGER(i32),
     FLOAT(f32),
     NONE,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum VariableType { 
+pub enum VariableType {
     FLOAT(f32),
     INTEGER(i32),
-    STRING(String), 
+    BOOL(bool),
+    STRING(String),
 }
 
-pub struct VarType { 
-    fvale: f32, 
-    ival: i32, 
+impl VariableType {
+    pub fn as_bool(&self) -> bool {
+        match self {
+            Self::FLOAT(x) => *x >= 1.0,
+            Self::INTEGER(x) => *x >= 1,
+            Self::BOOL(x) => *x,
+            Self::STRING(x) => *x != "".to_string(),
+        }
+    }
+
+    pub fn convert_bool(&mut self) -> Self {
+        // if is a bool, converts it to an integer for expression eval
+        match self {
+            Self::BOOL(x) => *self = Self::INTEGER(if *x { 1 } else { 0 }),
+            _ => {}
+        }
+        self.clone()
+    }
+
+    pub fn negate(&self) -> Self {
+        VariableType::BOOL(!self.as_bool())
+    }
 }
 
 impl StatementType {

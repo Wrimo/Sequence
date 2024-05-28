@@ -34,6 +34,9 @@ pub enum TokenType {
     EXPECT,
     REVEAL,
     IF,
+    AND, 
+    OR, 
+    NOT,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -94,6 +97,9 @@ impl FromStr for TokenType {
             "REVEAL" => Ok(TokenType::REVEAL),
             "EXPECT" => Ok(TokenType::EXPECT),
             "IF" => Ok(TokenType::IF),
+            "AND" => Ok(TokenType::AND), 
+            "OR" => Ok(TokenType::OR), 
+            "NOT" => Ok(TokenType::NOT),
             "VERTICALBAR" => Ok(TokenType::VERTICALBAR),
             _ => return Err(()),
         }
