@@ -1,9 +1,10 @@
-use crate::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
+use super::parsing_types::{CYKEntry, ConcattedProductions, Production, Token, TokenType};
 use crate::user_options::USER_OPTIONS;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::{fs, vec};
 
+// given a string, converts it to a vector of corresponding tokens 
 fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     let symtbl: HashMap<&str, TokenType> = vec![
         ("<-", TokenType::ASSIGNMENT),
@@ -115,10 +116,12 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     return Some(tokens);
 }
 
-fn get_productions() -> Vec<Production> {
+// takes the name of file that has a grammar in CNF form 
+// returns a vector of the productions in the grammar
+fn get_productions(file_name: &str) -> Vec<Production> {
     let mut productions: Vec<Production> = Vec::new();
 
-    let grammar = fs::read_to_string("grammar.cnf").unwrap();
+    let grammar = fs::read_to_string(file_name).unwrap();
     for line in grammar.split("\n") {
         let words: Vec<&str> = line.split_whitespace().collect();
 
@@ -175,9 +178,12 @@ fn get_productions() -> Vec<Production> {
 }
 
 type ParseError = ();
+
+// takes an input string and parses it according to the grammar stored in grammar.cnf 
+// returns the parse table on success or a ParseError if parsing fails 
 #[allow(non_snake_case)]
 pub fn parse(input: &str) -> Result<Vec<Vec<Vec<CYKEntry>>>, ParseError> {
-    let grammar: Vec<Production> = get_productions();
+    let grammar: Vec<Production> = get_productions("grammar.cnf");
     let tokens: Vec<Token> = match symbol_analysis(input) {
         Some(x) => x,
         None => return Err(()),
