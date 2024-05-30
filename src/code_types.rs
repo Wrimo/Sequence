@@ -44,6 +44,7 @@ pub enum Expression {
     NOT(Box<Expression>),
     FACTORIAL(Box<Expression>),
     EXPONENT(Box<Expression>, Box<Expression>),
+    ABS(Box<Expression>),
     PREV(String),
     IDENTIFIER(String),
     BOOL(bool),
@@ -91,6 +92,15 @@ impl VariableType {
             Self::INTEGER(_x) => {},
         }
         self.clone()
+    }
+
+    pub fn abs(&mut self) -> Self { 
+        self.bool_to_number(); 
+        match self { 
+            VariableType::FLOAT(x) => if *x < 0.0 { VariableType::FLOAT(-1.0 * (*x))} else {self.clone()}, 
+            VariableType::INTEGER(x) => if *x < 0 { VariableType::INTEGER(-1 * (*x))} else {self.clone()}, 
+            _ => {return self.clone()}, // probably need to change this later
+        }
     }
 }
 

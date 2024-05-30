@@ -22,7 +22,8 @@
 <Expr1> ::= <Expr1> <CompOp> <Expr2> | <Expr2>
 <Expr2> ::= <Expr2> <AddOp> <Term> | <Term>
 <Term> ::= <Term> <MulOp> <Term2> | <Term2>
-<Term2> ::= FACTORIAL <Factor> | <Term2> EXPONENT <Factor> | <Factor>
+<Term2> ::= FACTORIAL <Unit> | <Term2> EXPONENT <Unit> | <Unit>
+<Unit> ::= ABS <Factor> | <Factor>
 <Factor> ::= INTEGER | IDENTIFIER | FLOAT | <Bool> | PREV IDENTIFIER | RPAREN <Expr> LPAREN
 <CompOp> ::= EQUALOP | NOTEQUALOP | GTHANOP | GETHANOP | LTHANOP | LETHANOP
 <LogOp> ::= AND | OR

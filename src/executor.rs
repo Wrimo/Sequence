@@ -62,6 +62,8 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<Vari
         Expression::OR(x, y) => perform_log_op!(x, y, memory, ||),
         Expression::NOT(x) => calculate_expression(x, memory).negate(),
 
+        Expression::ABS(x) => calculate_expression(x, memory).abs(), 
+
         Expression::FACTORIAL(x) => {
             let x = calculate_expression(x, memory).convert_int();
             let mut product = 1;
