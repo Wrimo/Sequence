@@ -28,7 +28,7 @@ fn main() {
     // BUGS:
     // [x] a <- 12 + 12 * 12 fails the parser
     // [x] 2 * 1 + 1 evaluates as 3, but 1 + 1 * 2 evaluates as 2
-    // [] parantheses in expression do not work 
+    // [x] parantheses in expression do not work 
     // [] a <- 2 * not false fails the parsers 
 
     let args: Vec<String> = env::args().collect();

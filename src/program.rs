@@ -99,6 +99,8 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
         (Some(i), Some(j)) => {
             let mut l: Box<Expression> = rc_generate_expression(i.clone());
             let mut r: Box<Expression> = rc_generate_expression(j.clone());
+            println!("{:?} {:?}", l, r);
+
 
             // if either one has an empty slot, place the other one in it, right side gets priority
             match *r {
@@ -124,6 +126,8 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                         return r;
                     }
                 }
+
+                Expression::NONE => return l, 
 
                 _ => {}
             }
@@ -151,6 +155,7 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                         return l;
                     }
                 }
+                Expression::NONE => return r, 
 
                 Expression::PREV(ref mut s) => {
                     if let Expression::IDENTIFIER(s1) = *r {
