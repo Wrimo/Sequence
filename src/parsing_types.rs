@@ -5,9 +5,9 @@ pub enum TokenType {
     NONE,
     IDENTIFIER(String),
     ASSIGNMENT,
-    INTEGER(i32),
+    INTEGER(i64),
     STRING(String),
-    FLOAT(f32),
+    FLOAT(f64),
     TRUE, 
     FALSE,
     ADDOP,
@@ -37,6 +37,8 @@ pub enum TokenType {
     AND, 
     OR, 
     NOT,
+    FACTORIAL,
+    EXPONENT, 
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -100,6 +102,8 @@ impl FromStr for TokenType {
             "AND" => Ok(TokenType::AND), 
             "OR" => Ok(TokenType::OR), 
             "NOT" => Ok(TokenType::NOT),
+            "FACTORIAL" => Ok(TokenType::FACTORIAL),
+            "EXPONENT" => Ok(TokenType::EXPONENT),
             "VERTICALBAR" => Ok(TokenType::VERTICALBAR),
             _ => return Err(()),
         }

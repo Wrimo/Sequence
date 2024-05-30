@@ -19,24 +19,17 @@ fn usage(progname: &String) {
 
 fn main() {
     // TODO:
-    // [x] equal operator
-    // [x] else block
-    // [x] elif
-    // [x] true / false
-    // [x] loop of program
-    // [x] begin block
-    // [x] expect block
-    // [x] floats
-    // [x] bools (needed to get comparisons working)
-    // [] logical operators (requires setting up unary operators)
+    // [x] logical operators (requires setting up unary operators)
     // [] factorial, exponential operators 
     // [] better error messages
     // [] tests
     // [] clean up modules
+    // [] rewrite parser
     // BUGS:
     // [x] a <- 12 + 12 * 12 fails the parser
-    // [] 2 * 1 + 1 evaluates as 3, but 1 + 1 * 2 evaluates as 2
+    // [x] 2 * 1 + 1 evaluates as 3, but 1 + 1 * 2 evaluates as 2
     // [] parantheses in expression do not work 
+    // [] a <- 2 * not false fails the parsers 
 
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {usage(&args[0])};

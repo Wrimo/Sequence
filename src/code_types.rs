@@ -42,18 +42,20 @@ pub enum Expression {
     AND(Box<Expression>, Box<Expression>),
     OR(Box<Expression>, Box<Expression>),
     NOT(Box<Expression>),
+    FACTORIAL(Box<Expression>),
+    EXPONENT(Box<Expression>, Box<Expression>),
     PREV(String),
     IDENTIFIER(String),
     BOOL(bool),
-    INTEGER(i32),
-    FLOAT(f32),
+    INTEGER(i64),
+    FLOAT(f64),
     NONE,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum VariableType {
-    FLOAT(f32),
-    INTEGER(i32),
+    FLOAT(f64),
+    INTEGER(i64),
     BOOL(bool),
     STRING(String),
 }
@@ -68,7 +70,7 @@ impl VariableType {
         }
     }
 
-    pub fn convert_bool(&mut self) -> Self {
+    pub fn bool_to_number(&mut self) -> Self {
         // if is a bool, converts it to an integer for expression eval
         match self {
             Self::BOOL(x) => *self = Self::INTEGER(if *x { 1 } else { 0 }),
@@ -79,6 +81,16 @@ impl VariableType {
 
     pub fn negate(&self) -> Self {
         VariableType::BOOL(!self.as_bool())
+    }
+
+    pub fn convert_int(&mut self) -> Self { 
+        match self { 
+            Self::BOOL(x) => *self = Self::INTEGER(*x as i64), 
+            Self::FLOAT(x) => *self = Self::INTEGER(*x as i64), 
+            Self::STRING(_x) => *self = Self::INTEGER(0), // neeed to change later
+            Self::INTEGER(_x) => {},
+        }
+        self.clone()
     }
 }
 

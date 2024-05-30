@@ -6,11 +6,11 @@ use std::collections::HashMap;
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x, $memory).convert_bool(), &calculate_expression($y, $memory).convert_bool()) {
-            (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::INTEGER((*x $op *y) as i32),
-            (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT((*x $op *y)  as f32),
-            (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(*x $op (*y as f32) as f32),
-            (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::FLOAT(((*x as f32) $op *y) as f32),
+        match (&calculate_expression($x, $memory).bool_to_number(), &calculate_expression($y, $memory).bool_to_number()) {
+            (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::INTEGER((*x $op *y) as i64),
+            (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT((*x $op *y)  as f64),
+            (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(*x $op (*y as f64) as f64),
+            (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::FLOAT(((*x as f64) $op *y) as f64),
 
             _ => {
                 eprint!("Impossible operation");
@@ -22,11 +22,11 @@ macro_rules! perform_arth_op {
 
 macro_rules! perform_comp_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x, $memory).convert_bool(), &calculate_expression($y, $memory).convert_bool()) {
+        match (&calculate_expression($x, $memory).bool_to_number(), &calculate_expression($y, $memory).bool_to_number()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::BOOL(*x $op *y),
-            (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op (*y as f32)),
-            (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::BOOL((*x as f32) $op *y),
+            (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op (*y as f64)),
+            (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::BOOL((*x as f64) $op *y),
 
             _ => {
                 eprint!("Impossible operation");
@@ -59,9 +59,39 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<Vari
         Expression::GTHE(x, y) => perform_comp_op!(x, y, memory, >=),
 
         Expression::AND(x, y) => perform_log_op!(x, y, memory, &&),
-        Expression::OR(x, y) => perform_log_op!(x, y, memory, ||), 
-        Expression::NOT(x) => calculate_expression(x, memory).negate(), 
+        Expression::OR(x, y) => perform_log_op!(x, y, memory, ||),
+        Expression::NOT(x) => calculate_expression(x, memory).negate(),
 
+        Expression::FACTORIAL(x) => {
+            let x = calculate_expression(x, memory).convert_int();
+            let mut product = 1;
+            if let VariableType::INTEGER(val) = x {
+                for i in 2..val+1 {
+                    product *= i;
+                }
+            }
+            VariableType::INTEGER(product)
+        }
+
+        Expression::EXPONENT(x, y) => { 
+            let x = calculate_expression(x, memory).bool_to_number(); 
+            let y = calculate_expression(y, memory).bool_to_number();
+
+            match (x, y) { 
+                (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x, y)), 
+                (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(f64::powf(x, y as f64)),
+                (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x as f64, y)), 
+                (VariableType::INTEGER(x), VariableType::INTEGER(y)) => { 
+                    if y < 0 { 
+                        VariableType::FLOAT(f64::powf(x as f64, y as f64))
+                    }
+                    else {
+                        VariableType::INTEGER(x.pow(y.try_into().unwrap()))
+                    }
+                } 
+                (_, _) => {VariableType::INTEGER(0)}
+            }
+        }
 
         Expression::INTEGER(x) => VariableType::INTEGER(x),
         Expression::FLOAT(x) => VariableType::FLOAT(x),
@@ -73,9 +103,12 @@ fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<Vari
         }
         Expression::PREV(s) => {
             let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
+            if var_history.len() == 1 {
+                return var_history[0].clone();
+            }
             var_history[var_history.len() - 2].clone()
         }
-        Expression::NONE | _ => {
+        Expression::NONE => {
             println!("bad expr {:?}", expr);
             VariableType::INTEGER(-5)
         }

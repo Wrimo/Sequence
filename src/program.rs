@@ -49,7 +49,7 @@ fn rc_generate_abstract_syntax(
                     StatementType::ELSE => {
                         let idx = code_block.len() - 1;
                         code_block[idx].alt_code_blocks.push(cur_state.code_block.unwrap().clone());
-                        if let Some(exp) = cur_state.expr { 
+                        if let Some(exp) = cur_state.expr {
                             code_block[idx].alt_exps.push(exp.clone());
                         }
                     }
@@ -99,7 +99,7 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
         (Some(i), Some(j)) => {
             let mut l: Box<Expression> = rc_generate_expression(i.clone());
             let mut r: Box<Expression> = rc_generate_expression(j.clone());
-            println!("{:?} {:?}", l, r);
+
             // if either one has an empty slot, place the other one in it, right side gets priority
             match *r {
                 Expression::ADD(ref mut x, ref mut y)
@@ -114,7 +114,8 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 | Expression::LTH(ref mut x, ref mut y)
                 | Expression::LTHE(ref mut x, ref mut y)
                 | Expression::AND(ref mut x, ref mut y)
-                | Expression::OR(ref mut x, ref mut y) => {
+                | Expression::OR(ref mut x, ref mut y)
+                | Expression::EXPONENT(ref mut x, ref mut y) => {
                     if matches!(**x, Expression::NONE) {
                         *x = l;
                         return r;
@@ -138,9 +139,10 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 | Expression::GTH(ref mut x, ref mut y)
                 | Expression::GTHE(ref mut x, ref mut y)
                 | Expression::LTH(ref mut x, ref mut y)
-                | Expression::LTHE(ref mut x, ref mut y) 
+                | Expression::LTHE(ref mut x, ref mut y)
                 | Expression::AND(ref mut x, ref mut y)
-                | Expression::OR(ref mut x, ref mut y) => {
+                | Expression::OR(ref mut x, ref mut y) 
+                | Expression::EXPONENT(ref mut x, ref mut y)=> {
                     if matches!(**y, Expression::NONE) {
                         *y = r;
                         return l;
@@ -157,7 +159,12 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                     return l;
                 }
 
-                Expression::NOT(ref mut exp) => { 
+                Expression::NOT(ref mut exp) => {
+                    *exp = r;
+                    return l;
+                }
+
+                Expression::FACTORIAL(ref mut exp) => {
                     *exp = r; 
                     return l; 
                 }
@@ -170,7 +177,7 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 TokenType::INTEGER(x) => return Box::new(Expression::INTEGER(x.clone())),
                 TokenType::IDENTIFIER(s) => return Box::new(Expression::IDENTIFIER(s.clone())),
                 TokenType::FLOAT(x) => return Box::new(Expression::FLOAT(x.clone())),
-                TokenType::TRUE => return Box::new(Expression::BOOL(true)), 
+                TokenType::TRUE => return Box::new(Expression::BOOL(true)),
                 TokenType::FALSE => return Box::new(Expression::BOOL(false)),
 
                 TokenType::ADDOP => return Box::new(Expression::ADD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
@@ -179,7 +186,9 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 TokenType::DIVOP => return Box::new(Expression::DIV(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::MODOP => return Box::new(Expression::MOD(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::EQUALOP => return Box::new(Expression::EQU(Box::new(Expression::NONE), Box::new(Expression::NONE))),
-                TokenType::NOTEQUALOP => {return Box::new(Expression::NEQU(Box::new(Expression::NONE), Box::new(Expression::NONE)))},
+                TokenType::NOTEQUALOP => {
+                    return Box::new(Expression::NEQU(Box::new(Expression::NONE), Box::new(Expression::NONE)))
+                }
                 TokenType::GTHANOP => return Box::new(Expression::GTH(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::GETHANOP => return Box::new(Expression::GTHE(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::LTHANOP => return Box::new(Expression::LTH(Box::new(Expression::NONE), Box::new(Expression::NONE))),
@@ -187,6 +196,9 @@ fn rc_generate_expression(production: Box<CYKEntry>) -> Box<Expression> {
                 TokenType::AND => return Box::new(Expression::AND(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::OR => return Box::new(Expression::OR(Box::new(Expression::NONE), Box::new(Expression::NONE))),
                 TokenType::NOT => return Box::new(Expression::NOT(Box::new(Expression::NONE))),
+
+                TokenType::FACTORIAL => return Box::new(Expression::FACTORIAL(Box::new(Expression::NONE))),
+                TokenType::EXPONENT => return Box::new(Expression::EXPONENT(Box::new(Expression::NONE), Box::new(Expression::NONE))), 
 
                 TokenType::PREV => return Box::new(Expression::PREV(String::from(""))),
                 _ => return Box::new(Expression::NONE),

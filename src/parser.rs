@@ -25,6 +25,8 @@ fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         (">", TokenType::GTHANOP),
         ("<", TokenType::LTHANOP),
         ("|", TokenType::VERTICALBAR),
+        ("!", TokenType::FACTORIAL),
+        ("^", TokenType::EXPONENT), 
     ]
     .into_iter()
     .collect();
