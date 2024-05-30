@@ -44,7 +44,7 @@ macro_rules! perform_log_op {
     }
 }
 
-fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<VariableType>>) -> VariableType {
+pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<VariableType>>) -> VariableType {
     match *expr {
         Expression::ADD(x, y) => perform_arth_op!(x, y, memory, +),
         Expression::SUB(x, y) => perform_arth_op!(x, y, memory, -),

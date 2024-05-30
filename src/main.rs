@@ -21,7 +21,7 @@ fn main() {
     // [] better error messages
     // [] tests
     // [] clean up modules
-    // [] rewrite parser
+    // [x] rewrite parser
     // BUGS:
     // [] a <- 2 * not false fails the parsers 
 
