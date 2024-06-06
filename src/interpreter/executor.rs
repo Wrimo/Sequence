@@ -1,5 +1,5 @@
 use super::code_types::{Expression, Program, Statement, StatementType, VariableType};
-use super::parser::parsing::parse;
+// use super::parser::lexer::parse;
 use super::semantic_analysis::generate_abstract_syntax;
 use crate::user_options::USER_OPTIONS;
 use std::collections::HashMap;
@@ -172,14 +172,14 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<Va
 }
 
 pub fn run_program(input: &str) {
-    let m = match parse(input) {
-        Ok(x) => x,
-        Err(()) => {
-            println!("Parsing failed!");
-            return;
-        }
-    };
-    println!("Parsing succeeded!");
+    // let m = match parse(input) {
+    //     Ok(x) => x,
+    //     Err(()) => {
+    //         println!("Parsing failed!");
+    //         return;
+    //     }
+    // };
+    // println!("Parsing succeeded!");
 
     let mut program: Program = Program {
         begin: None,
@@ -187,22 +187,22 @@ pub fn run_program(input: &str) {
         body: Vec::new(),
     };
     let mut body: Vec<Statement> = Vec::new();
-    for ent in &m[0][m.len() - 1] {
-        if ent.symbol == "<$S>" {
-            let mut statement: Statement = Statement {
-                statement_type: StatementType::NONE,
-                var_name: None,
-                expr: None,
-                code_block: None,
-                alt_code_blocks: Vec::new(),
-                alt_exps: Vec::new(),
-            };
+    // for ent in &m[0][m.len() - 1] {
+    //     if ent.symbol == "<$S>" {
+    //         let mut statement: Statement = Statement {
+    //             statement_type: StatementType::NONE,
+    //             var_name: None,
+    //             expr: None,
+    //             code_block: None,
+    //             alt_code_blocks: Vec::new(),
+    //             alt_exps: Vec::new(),
+    //         };
 
-            generate_abstract_syntax(Box::new(ent.clone()), &mut body, &mut program, &mut statement);
-            program.body = body;
-            break;
-        }
-    }
+    //         generate_abstract_syntax(Box::new(ent.clone()), &mut body, &mut program, &mut statement);
+    //         program.body = body;
+    //         break;
+    //     }
+    // }
     let mut memory: HashMap<String, Vec<VariableType>> = HashMap::new();
 
     if USER_OPTIONS.lock().unwrap().debug {
