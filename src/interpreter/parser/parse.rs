@@ -67,7 +67,7 @@ impl Parser {
         return false;
     }
 
-    fn body(&mut self){ 
+    fn body(&mut self) {
         loop {
             self.statement();
             self.expect(TokenType::NEWLINE);
@@ -89,27 +89,7 @@ impl Parser {
         }
     }
 
-    fn statement(&mut self) {
-        if self.current_token.equals(&TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(&TokenType::ASSIGNMENT) {
-            self.parse_stmt_assign();
-        } else if self.accept(&TokenType::BEGIN) { 
-            self.parse_stmt_begin(); 
-        } else if self.accept(&TokenType::EXPECT) { 
-            self.parse_stmt_expect();
-        } else if self.accept(&TokenType::REVEAL) { 
-            self.parse_stmt_reveal(); 
-        } else if self.accept(&TokenType::PRINT) { 
-            self.parse_stmt_print();
-        }
-        else {
-            self.error_custom("expected statement");
-        }
-    }
-
     fn expr(&mut self) {
-        if self.accept(&TokenType::AND) || self.accept(&TokenType::OR) {
-            self.next_token();
-        }
         self.expr_comp();
         while self.accept(&TokenType::AND) || self.accept(&TokenType::OR) {
             self.expr_comp();
@@ -130,6 +110,7 @@ impl Parser {
     }
 
     fn epxr_add(&mut self) {
+        if self.accept(&TokenType::ADDOP) || self.accept(&TokenType::SUBOP) {}
         self.expr_mul();
         while self.accept(&TokenType::ADDOP) || self.accept(&TokenType::SUBOP) {
             self.expr_mul();
@@ -137,28 +118,55 @@ impl Parser {
     }
 
     fn expr_mul(&mut self) {
-        self.expr_fact();
+        self.expr_expo();
         while self.accept(&TokenType::MULOP) || self.accept(&TokenType::DIVOP) {
-            self.expr_fact();
+            self.expr_expo();
         }
     }
 
-    fn expr_fact(&mut self) {
-        self.factor();
+    fn expr_expo(&mut self) {
+        self.unary_fact();
         while self.accept(&TokenType::EXPONENT) {
-            self.factor();
+            self.unary_fact();
         }
     }
 
+    fn unary_fact(&mut self) {
+        if self.accept(&TokenType::NOT) {}
+        else if self.accept(&TokenType::FACTORIAL) {} 
+        else if self.accept(&TokenType::SUBOP) {}
+        self.factor(); 
+    }
+    
     fn factor(&mut self) {
         if self.accept(&TokenType::IDENTIFIER(String::from(""))) {
         } else if self.accept(&TokenType::INTEGER(0)) {
         } else if self.accept(&TokenType::FLOAT(0.0)) {
+        } else if self.accept(&TokenType::TRUE) {
+        } else if self.accept(&TokenType::FALSE) {
         } else if self.accept(&TokenType::LPAREN) {
             self.expr();
             self.expect(TokenType::RPAREN);
         } else {
-            self.error_custom("expected expression")
+            self.error_custom(format!("expression error for token {:?}", self.current_token).as_str());
+        }
+    }
+
+    fn statement(&mut self) {
+        if self.current_token.equals(&TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(&TokenType::ASSIGNMENT) {
+            self.parse_stmt_assign();
+        } else if self.accept(&TokenType::BEGIN) {
+            self.parse_stmt_begin();
+        } else if self.accept(&TokenType::EXPECT) {
+            self.parse_stmt_expect();
+        } else if self.accept(&TokenType::REVEAL) {
+            self.parse_stmt_reveal();
+        } else if self.accept(&TokenType::PRINT) {
+            self.parse_stmt_print();
+        } else if self.accept(&TokenType::IF) {
+            self.parse_stmt_if();
+        } else {
+            self.error_custom("expected statement");
         }
     }
 
@@ -168,29 +176,43 @@ impl Parser {
         self.expr();
     }
 
-    fn parse_stmt_begin(&mut self) { 
-        self.code_block(); 
+    fn parse_stmt_begin(&mut self) {
+        self.code_block();
     }
 
-    fn parse_stmt_expect(&mut self) { 
-        self.expr(); 
-        self.code_block(); 
+    fn parse_stmt_expect(&mut self) {
+        self.expr();
+        self.code_block();
     }
 
-    fn parse_stmt_reveal(&mut self) { 
+    fn parse_stmt_reveal(&mut self) {
         self.expect(TokenType::IDENTIFIER(String::from("")));
     }
 
-    fn parse_stmt_print(&mut self) { 
+    fn parse_stmt_print(&mut self) {
         // need to update to add multiple expressions to be printed
-        self.expect(TokenType::LPAREN); 
-        self.expr(); 
+        self.expect(TokenType::LPAREN);
+        self.expr();
         self.expect(TokenType::RPAREN);
     }
 
-    // left to do for new parser 
-    // [] booleans for expressions 
-    // [] unary operators 
-    // [] if/else statements
+    fn parse_stmt_if(&mut self) {
+        self.expr();
+        self.code_block();
+
+        while self.accept(&TokenType::ELIF) {
+            self.expr();
+            self.code_block();
+        }
+
+        if self.accept(&TokenType::ELSE) {
+            self.code_block();
+        }
+    }
+
+    // left to do for new parser
+    // [x] booleans for expressions
+    // [x] unary operators
+    // [x] if/else statements
     // [] generate abstract syntax tree
 }
