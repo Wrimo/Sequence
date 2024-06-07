@@ -1,3 +1,5 @@
+use crate::user_options::USER_OPTIONS;
+
 use super::parsing_types::{Token, TokenType};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -116,5 +118,11 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         token_type: TokenType::NEWLINE, 
         line: line_number + 1, 
     });
+
+    if USER_OPTIONS.lock().unwrap().debug { 
+        for i in 0..tokens.len(){ 
+            println!("{:?}", tokens[i]);
+        }
+    }
     return Some(tokens);
 }

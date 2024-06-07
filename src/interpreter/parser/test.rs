@@ -4,7 +4,7 @@ use super::{
 
 #[test]
 fn parse_assign() {
-    let tokens = symbol_analysis("if not false and not false + 1 and !25 {\n a <- 2\n}").unwrap(); 
+    let tokens = symbol_analysis("a <- false and true").unwrap(); 
 
     // 1 and 1 + true + false or true
     // not true + not true 
