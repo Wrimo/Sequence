@@ -95,7 +95,8 @@ impl Parser {
                 StatementType::EXPECT => self.prog.expect = Some(self.stat.clone()),
                 _ => self.prog.add(self.stat.clone()),
             }
-
+            self.stat.reset();
+            
             if self.accept(TokenType::NONE) {
                 break;
             }
@@ -111,6 +112,7 @@ impl Parser {
             self.statement();
             self.expect(TokenType::NEWLINE);
             code_block.push(self.stat.clone());
+            self.stat.reset();
             if self.accept(TokenType::RBRACKET) {
                 break;
             }
@@ -290,9 +292,19 @@ impl Parser {
 
     fn parse_stmt_print(&mut self) {
         self.stat.set_type(StatementType::PRINT);
-        // need to update to add multiple expressions to be printed seperated by comma
         self.expect(TokenType::LPAREN);
+
+        if self.accept(TokenType::RPAREN) { // no given expression; print()
+            self.stat.expr = Some(Expression::new(ExpressionType::NONE, None, None)); 
+            return; 
+        }
         self.stat.expr = Some(self.expr());
+
+        while self.accept(TokenType::COMMA) { 
+            let expr = self.expr(); 
+            self.stat.alt_exps.push(expr);
+        }
+
         self.expect(TokenType::RPAREN);
     }
 

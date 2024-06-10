@@ -1,6 +1,7 @@
 use super::parser::expr::{Expression, ExpressionType};
 use super::parser::lexer::symbol_analysis;
 use super::parser::parse::Parser;
+use super::parser::parsing_types::TokenType;
 use super::parser::statement::{Statement, StatementType};
 use super::variable_type::VariableType;
 use crate::user_options::USER_OPTIONS;
@@ -113,17 +114,17 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
             var_history[var_history.len() - 2].clone()
         }
         _ => {
-            VariableType::INTEGER(-5)
+            VariableType::INTEGER(-1)
         }
     }
 }
 
 fn print_variable(x: &VariableType) {
     match x {
-        VariableType::BOOL(x) => println!("{}", x),
-        VariableType::INTEGER(x) => println!("{}", x),
-        VariableType::FLOAT(x) => println!("{}", x),
-        VariableType::STRING(x) => println!("{}", x),
+        VariableType::BOOL(x) => print!("{} ", x),
+        VariableType::INTEGER(x) => print!("{} ", x),
+        VariableType::FLOAT(x) => print!("{} ", x),
+        VariableType::STRING(x) => print!("{} ", x),
     }
 }
 
@@ -140,8 +141,19 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<Va
                     .or_insert(vec![val.clone()]);
             }
             StatementType::PRINT => {
+                let exp = statement.expr.as_ref().unwrap(); 
+                if matches!(exp.exp_type, ExpressionType::NONE) {
+                    println!("");
+                    return; 
+                }
                 let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
                 print_variable(&x);
+                
+                for i in 0..statement.alt_exps.len() { 
+                    let x = calculate_expression(statement.alt_exps[i].clone(), &memory);
+                    print_variable(&x);
+                }
+                println!("");
             }
 
             StatementType::IF => {

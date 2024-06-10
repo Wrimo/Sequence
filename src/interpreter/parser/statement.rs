@@ -60,5 +60,7 @@ impl Statement {
         self.var_name = None;
         self.expr = None;
         self.code_block = None;
+        self.alt_code_blocks = Vec::new(); 
+        self.alt_exps = Vec::new(); 
     }
 }
