@@ -30,4 +30,7 @@
 <MulOp> ::= MULOP | DIVOP | MODOP
 <AddOp> ::= ADDOP | SUBOP
 
+
+<Expr> ::= <ExprComp> AND <Expr> | <ExprComp> AND <Expr> | NOT <ExprComp> | <ExprComp>
+
 <Bool> ::= TRUE | FALSE

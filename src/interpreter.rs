@@ -1,5 +1,4 @@
 pub mod executor;
-mod semantic_analysis; 
-mod code_types;
+mod variable_type;
 mod parser;
 mod test; 

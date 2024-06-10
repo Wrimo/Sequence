@@ -34,6 +34,8 @@ pub enum TokenType {
     EXPECT,
     REVEAL,
     IF,
+    ELSE,
+    ELIF, 
     AND,
     OR,
     NOT,
@@ -44,17 +46,7 @@ pub enum TokenType {
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
-}
-
-pub struct Production {
-    pub symbol: String,
-    pub terminals: Vec<TokenType>,
-    pub nonterminals: Vec<ConcattedProductions>,
-}
-
-pub struct ConcattedProductions {
-    pub production: String,
-    pub production1: String,
+    pub line: usize, 
 }
 
 #[derive(Debug, Clone)]
@@ -100,6 +92,8 @@ impl FromStr for TokenType {
             "REVEAL" => Ok(TokenType::REVEAL),
             "EXPECT" => Ok(TokenType::EXPECT),
             "IF" => Ok(TokenType::IF),
+            "ELSE" => Ok(TokenType::ELSE), 
+            "ELIF" => Ok(TokenType::ELIF), 
             "AND" => Ok(TokenType::AND), 
             "OR" => Ok(TokenType::OR), 
             "NOT" => Ok(TokenType::NOT),
@@ -122,22 +116,18 @@ impl PartialEq for TokenType {
     }
 }
 
-impl Production {
-    pub fn goes_to_terminal(&self, token: &Token) -> bool {
-        for term in &self.terminals {
-            if *term == token.token_type {
-                return true;
-            }
-        }
-        return false;
+impl PartialEq for Token { 
+    fn eq(&self, other: &Self) -> bool {
+        self.token_type == other.token_type
     }
 
-    pub fn goes_to_nonterminal(&self, sym: &str, sym1: &str) -> bool {
-        for prod_opt in &self.nonterminals {
-            if prod_opt.production == sym.to_string() && prod_opt.production1 == sym1.to_string() {
-                return true;
-            }
-        }
-        return false;
+    fn ne(&self, other: &Self) -> bool {
+        self.token_type == other.token_type
+    }
+}
+
+impl Token { 
+    pub fn equals(&self, other: TokenType) -> bool { 
+        self.token_type == other
     }
 }
