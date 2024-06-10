@@ -18,7 +18,7 @@ fn main() {
     // [x] logical operators (requires setting up unary operators)
     // [x] factorial, exponential operators 
     // [] execute code from other files
-    // [] better error messages
+    // [x] better error messages
     // [] tests
     // [] clean up modules
     // [x] rewrite parser
