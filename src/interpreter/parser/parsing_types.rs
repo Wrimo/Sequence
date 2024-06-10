@@ -43,6 +43,7 @@ pub enum TokenType {
     EXPONENT,
     ABS,
     COMMA, 
+    ACCESSOR, 
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -103,6 +104,7 @@ impl FromStr for TokenType {
             "EXPONENT" => Ok(TokenType::EXPONENT),
             "VERTICALBAR" => Ok(TokenType::VERTICALBAR),
             "COMMA" => Ok(TokenType::COMMA), 
+            "ACCESSOR" => Ok(TokenType::ACCESSOR), 
             _ => return Err(()),
         }
     }

@@ -20,6 +20,7 @@ pub enum ExpressionType {
     UMIN, 
     ABS,
     PREV(String),
+    ACCESSOR,
     IDENTIFIER(String),
     BOOL(bool),
     INTEGER(i64),
@@ -41,5 +42,15 @@ impl Expression {
             lhs: lhs, 
             rhs: rhs, 
         })
+    }
+}
+
+impl PartialEq for ExpressionType {
+    fn eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) != std::mem::discriminant(other)
     }
 }

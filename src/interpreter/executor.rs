@@ -1,11 +1,11 @@
 use super::parser::expr::{Expression, ExpressionType};
 use super::parser::lexer::symbol_analysis;
 use super::parser::parse::Parser;
-use super::parser::parsing_types::TokenType;
 use super::parser::statement::{Statement, StatementType};
 use super::variable_type::VariableType;
 use crate::user_options::USER_OPTIONS;
 use std::collections::HashMap;
+use std::env::var;
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
@@ -48,20 +48,20 @@ macro_rules! perform_log_op {
 }
 
 pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<VariableType>>) -> VariableType {
-    let lhs = expr.lhs; 
-    let rhs = expr.rhs; 
+    let lhs = expr.lhs;
+    let rhs = expr.rhs;
     match expr.exp_type {
-        ExpressionType::ADD  => perform_arth_op!(lhs, rhs, memory, +),
+        ExpressionType::ADD => perform_arth_op!(lhs, rhs, memory, +),
         ExpressionType::SUB => perform_arth_op!(lhs, rhs, memory, -),
         ExpressionType::MUL => perform_arth_op!(lhs, rhs, memory, *),
         ExpressionType::DIV => perform_arth_op!(lhs, rhs, memory, /),
         ExpressionType::MOD => perform_arth_op!(lhs, rhs, memory, %),
         ExpressionType::EQU => perform_comp_op!(lhs, rhs, memory, ==),
-        ExpressionType::NEQU  => perform_comp_op!(lhs, rhs, memory, !=),
+        ExpressionType::NEQU => perform_comp_op!(lhs, rhs, memory, !=),
         ExpressionType::LTH => perform_comp_op!(lhs, rhs, memory, <),
-        ExpressionType::LTHE  => perform_comp_op!(lhs, rhs, memory, <=),
+        ExpressionType::LTHE => perform_comp_op!(lhs, rhs, memory, <=),
         ExpressionType::GTH => perform_comp_op!(lhs, rhs, memory, >),
-        ExpressionType::GTHE  => perform_comp_op!(lhs, rhs, memory, >=),
+        ExpressionType::GTHE => perform_comp_op!(lhs, rhs, memory, >=),
 
         ExpressionType::AND => perform_log_op!(lhs, rhs, memory, &&),
         ExpressionType::OR => perform_log_op!(lhs, rhs, memory, ||),
@@ -113,9 +113,24 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
             }
             var_history[var_history.len() - 2].clone()
         }
-        _ => {
-            VariableType::INTEGER(-1)
+        ExpressionType::ACCESSOR => {
+            if let ExpressionType::IDENTIFIER(s) = lhs.clone().unwrap().exp_type {
+                let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
+                // could clean this up with a simpler way to get values out of VariableType
+                if let VariableType::INTEGER(x) = calculate_expression(rhs.unwrap(), &memory).convert_int() {
+                    
+                    return var_history[x as usize].clone();
+                }
+            } else if let ExpressionType::IDENTIFIER(s) = rhs.unwrap().exp_type {
+                let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
+                if let VariableType::INTEGER(x) = calculate_expression(lhs.unwrap(), &memory).convert_int() {
+                    return var_history[var_history.len() - (x as usize)].clone();
+                }
+            }
+            return VariableType::INTEGER(0);
         }
+
+        _ => VariableType::INTEGER(-1),
     }
 }
 
@@ -141,15 +156,15 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<Va
                     .or_insert(vec![val.clone()]);
             }
             StatementType::PRINT => {
-                let exp = statement.expr.as_ref().unwrap(); 
+                let exp = statement.expr.as_ref().unwrap();
                 if matches!(exp.exp_type, ExpressionType::NONE) {
                     println!("");
-                    return; 
+                    continue;
                 }
                 let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
                 print_variable(&x);
-                
-                for i in 0..statement.alt_exps.len() { 
+
+                for i in 0..statement.alt_exps.len() {
                     let x = calculate_expression(statement.alt_exps[i].clone(), &memory);
                     print_variable(&x);
                 }

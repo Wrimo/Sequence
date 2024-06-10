@@ -28,7 +28,9 @@ impl Parser {
     fn error_missing_token(&self, t: TokenType) {
         eprintln!(
             "line {}: expected {:?} got {:?}",
-            self.current_token.line + 1, t, self.current_token.token_type
+            self.current_token.line + 1,
+            t,
+            self.current_token.token_type
         );
         assert!(false);
     }
@@ -96,7 +98,7 @@ impl Parser {
                 _ => self.prog.add(self.stat.clone()),
             }
             self.stat.reset();
-            
+
             if self.accept(TokenType::NONE) {
                 break;
             }
@@ -213,10 +215,22 @@ impl Parser {
             return Expression::new(ExpressionType::UMIN, Some(self.factor()), None);
         } else if self.accept(TokenType::VERTICALBAR) {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
-        } else if self.accept(TokenType::PREV) { 
+        } else if self.accept(TokenType::PREV) {
             return Expression::new(ExpressionType::PREV(self.expect_identifier().unwrap()), None, None);
         }
-        return self.factor();
+        return self.accessor_factor();
+    }
+
+    fn accessor_factor(&mut self) -> Box<Expression> {
+        let mut lhs = self.factor();
+        while self.accept(TokenType::ACCESSOR) {
+            let rhs = self.unary_fact();
+            if !matches!(rhs.exp_type, ExpressionType::IDENTIFIER(_)) && !matches!(lhs.exp_type, ExpressionType::IDENTIFIER(_)) {
+                self.error_custom("one side of accessing must be an identifier")
+            }
+            lhs = Expression::new(ExpressionType::ACCESSOR, Some(lhs), Some(rhs));
+        }
+        return lhs;
     }
 
     fn factor(&mut self) -> Box<Expression> {
@@ -294,14 +308,15 @@ impl Parser {
         self.stat.set_type(StatementType::PRINT);
         self.expect(TokenType::LPAREN);
 
-        if self.accept(TokenType::RPAREN) { // no given expression; print()
-            self.stat.expr = Some(Expression::new(ExpressionType::NONE, None, None)); 
-            return; 
+        if self.accept(TokenType::RPAREN) {
+            // no given expression; print()
+            self.stat.expr = Some(Expression::new(ExpressionType::NONE, None, None));
+            return;
         }
         self.stat.expr = Some(self.expr());
 
-        while self.accept(TokenType::COMMA) { 
-            let expr = self.expr(); 
+        while self.accept(TokenType::COMMA) {
+            let expr = self.expr();
             self.stat.alt_exps.push(expr);
         }
 
