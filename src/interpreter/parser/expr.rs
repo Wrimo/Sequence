@@ -1,5 +1,3 @@
-use super::parsing_types::TokenType;
-
 #[derive(Clone, Debug)]
 
 pub enum ExpressionType {

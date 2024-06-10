@@ -7,7 +7,6 @@ pub enum StatementType {
     REVEAL,
     ASSIGN,
     IF,
-    ELSE,
     BEGIN,
     EXPECT,
 }
@@ -39,15 +38,6 @@ impl Program {
 
     pub fn add(&mut self, s: Statement) { 
         self.body.push(s);
-    }
-}
-
-impl StatementType {
-    pub fn has_code_block(&self) -> bool {
-        match self {
-            StatementType::IF | StatementType::ELSE | StatementType::BEGIN | StatementType::EXPECT => true,
-            _ => false,
-        }
     }
 }
 

@@ -127,7 +127,7 @@ impl PartialEq for Token {
 }
 
 impl Token { 
-    pub fn equals(&self, other: &TokenType) -> bool { 
-        self.token_type == *other
+    pub fn equals(&self, other: TokenType) -> bool { 
+        self.token_type == other
     }
 }

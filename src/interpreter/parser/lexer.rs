@@ -3,7 +3,7 @@ use crate::user_options::USER_OPTIONS;
 use super::parsing_types::{Token, TokenType};
 use std::collections::HashMap;
 use std::str::FromStr;
-use std::{fs, vec};
+use std::vec;
 
 // given a string, converts it to a vector of corresponding tokens
 pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {

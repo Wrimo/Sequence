@@ -1,6 +1,4 @@
-use super::{
-    lexer::symbol_analysis, parse::Parser, parsing_types::{Token, TokenType}
-};
+use super::{lexer::symbol_analysis, parse::Parser, parsing_types::{Token, TokenType}};
 
 #[test]
 fn parse_assign() {

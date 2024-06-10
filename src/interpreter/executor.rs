@@ -1,14 +1,14 @@
 use super::parser::expr::{Expression, ExpressionType};
 use super::parser::lexer::symbol_analysis;
 use super::parser::parse::Parser;
-use super::parser::statement::{Program, Statement, StatementType};
+use super::parser::statement::{Statement, StatementType};
 use super::variable_type::VariableType;
 use crate::user_options::USER_OPTIONS;
 use std::collections::HashMap;
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x, $memory).bool_to_number(), &calculate_expression($y, $memory).bool_to_number()) {
+        match (&calculate_expression($x.unwrap(), $memory).bool_to_number(), &calculate_expression($y.unwrap(), $memory).bool_to_number()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::INTEGER((*x $op *y) as i64),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT((*x $op *y)  as f64),
             (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(*x $op (*y as f64) as f64),
@@ -24,7 +24,7 @@ macro_rules! perform_arth_op {
 
 macro_rules! perform_comp_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x, $memory).bool_to_number(), &calculate_expression($y, $memory).bool_to_number()) {
+        match (&calculate_expression($x.unwrap(), $memory).bool_to_number(), &calculate_expression($y.unwrap(), $memory).bool_to_number()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op (*y as f64)),
@@ -41,60 +41,62 @@ macro_rules! perform_comp_op {
 macro_rules! perform_log_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
         VariableType::BOOL(
-            calculate_expression($x, $memory).as_bool() $op calculate_expression($y, $memory).as_bool()
+            calculate_expression($x.unwrap(), $memory).as_bool() $op calculate_expression($y.unwrap(), $memory).as_bool()
         )
     }
 }
 
 pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<VariableType>>) -> VariableType {
+    let lhs = expr.lhs; 
+    let rhs = expr.rhs; 
     match expr.exp_type {
-        // ExpressionType::ADD(x, y) => perform_arth_op!(x, y, memory, +),
-        // ExpressionType::SUB(x, y) => perform_arth_op!(x, y, memory, -),
-        // ExpressionType::MUL(x, y) => perform_arth_op!(x, y, memory, *),
-        // ExpressionType::DIV(x, y) => perform_arth_op!(x, y, memory, /),
-        // ExpressionType::MOD(x, y) => perform_arth_op!(x, y, memory, %),
-        // ExpressionType::EQU(x, y) => perform_comp_op!(x, y, memory, ==),
-        // ExpressionType::NEQU(x, y) => perform_comp_op!(x, y, memory, !=),
-        // ExpressionType::LTH(x, y) => perform_comp_op!(x, y, memory, <),
-        // ExpressionType::LTHE(x, y) => perform_comp_op!(x, y, memory, <=),
-        // ExpressionType::GTH(x, y) => perform_comp_op!(x, y, memory, >),
-        // ExpressionType::GTHE(x, y) => perform_comp_op!(x, y, memory, >=),
+        ExpressionType::ADD  => perform_arth_op!(lhs, rhs, memory, +),
+        ExpressionType::SUB => perform_arth_op!(lhs, rhs, memory, -),
+        ExpressionType::MUL => perform_arth_op!(lhs, rhs, memory, *),
+        ExpressionType::DIV => perform_arth_op!(lhs, rhs, memory, /),
+        ExpressionType::MOD => perform_arth_op!(lhs, rhs, memory, %),
+        ExpressionType::EQU => perform_comp_op!(lhs, rhs, memory, ==),
+        ExpressionType::NEQU  => perform_comp_op!(lhs, rhs, memory, !=),
+        ExpressionType::LTH => perform_comp_op!(lhs, rhs, memory, <),
+        ExpressionType::LTHE  => perform_comp_op!(lhs, rhs, memory, <=),
+        ExpressionType::GTH => perform_comp_op!(lhs, rhs, memory, >),
+        ExpressionType::GTHE  => perform_comp_op!(lhs, rhs, memory, >=),
 
-        // ExpressionType::AND(x, y) => perform_log_op!(x, y, memory, &&),
-        // ExpressionType::OR(x, y) => perform_log_op!(x, y, memory, ||),
-        // ExpressionType::NOT(x) => calculate_expression(x, memory).negate(),
+        ExpressionType::AND => perform_log_op!(lhs, rhs, memory, &&),
+        ExpressionType::OR => perform_log_op!(lhs, rhs, memory, ||),
+        ExpressionType::NOT => calculate_expression(lhs.unwrap(), memory).negate(),
 
-        // ExpressionType::ABS(x) => calculate_expression(x, memory).abs(),
+        ExpressionType::ABS => calculate_expression(lhs.unwrap(), memory).abs(),
 
-        // ExpressionType::FACTORIAL(x) => {
-        //     let x = calculate_expression(x, memory).convert_int();
-        //     let mut product = 1;
-        //     if let VariableType::INTEGER(val) = x {
-        //         for i in 2..val + 1 {
-        //             product *= i;
-        //         }
-        //     }
-        //     VariableType::INTEGER(product)
-        // }
+        ExpressionType::FACTORIAL => {
+            let x = calculate_expression(lhs.unwrap(), memory).convert_int();
+            let mut product = 1;
+            if let VariableType::INTEGER(val) = x {
+                for i in 2..val + 1 {
+                    product *= i;
+                }
+            }
+            VariableType::INTEGER(product)
+        }
 
-        // ExpressionType::EXPONENT(x, y) => {
-        //     let x = calculate_expression(x, memory).bool_to_number();
-        //     let y = calculate_expression(y, memory).bool_to_number();
+        ExpressionType::EXPONENT => {
+            let x = calculate_expression(lhs.unwrap(), memory).bool_to_number();
+            let y = calculate_expression(rhs.unwrap(), memory).bool_to_number();
 
-        //     match (x, y) {
-        //         (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x, y)),
-        //         (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(f64::powf(x, y as f64)),
-        //         (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x as f64, y)),
-        //         (VariableType::INTEGER(x), VariableType::INTEGER(y)) => {
-        //             if y < 0 {
-        //                 VariableType::FLOAT(f64::powf(x as f64, y as f64))
-        //             } else {
-        //                 VariableType::INTEGER(x.pow(y.try_into().unwrap()))
-        //             }
-        //         }
-        //         (_, _) => VariableType::INTEGER(0),
-        //     }
-        // }
+            match (x, y) {
+                (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x, y)),
+                (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(f64::powf(x, y as f64)),
+                (VariableType::INTEGER(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x as f64, y)),
+                (VariableType::INTEGER(x), VariableType::INTEGER(y)) => {
+                    if y < 0 {
+                        VariableType::FLOAT(f64::powf(x as f64, y as f64))
+                    } else {
+                        VariableType::INTEGER(x.pow(y.try_into().unwrap()))
+                    }
+                }
+                (_, _) => VariableType::INTEGER(0),
+            }
+        }
         ExpressionType::INTEGER(x) => VariableType::INTEGER(x),
         ExpressionType::FLOAT(x) => VariableType::FLOAT(x),
         ExpressionType::BOOL(x) => VariableType::BOOL(x),
@@ -110,8 +112,7 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
             }
             var_history[var_history.len() - 2].clone()
         }
-        _ | ExpressionType::NONE => {
-            println!("bad expr {:?}", expr);
+        _ => {
             VariableType::INTEGER(-5)
         }
     }
@@ -184,20 +185,20 @@ pub fn run_program(input: &str) {
         }
     }
 
-    // if matches!(program.expect.as_ref(), None) {
-    //     println!("WARNING: Running with no expect block, program will not terminate!");
-    // }
-    // if let Some(begin) = &program.begin {
-    //     execute_program(&begin.code_block.as_ref().unwrap(), &mut memory)
-    // }
-    // loop {
-    //     execute_program(&program.body, &mut memory);
-    //     // expect block logic
-    //     if let Some(ref expect) = program.expect {
-    //         if calculate_expression(expect.expr.clone().unwrap(), &memory).as_bool() {
-    //             execute_program(&expect.code_block.as_ref().unwrap(), &mut memory);
-    //             break;
-    //         }
-    //     }
-    // }
+    if matches!(program.expect.as_ref(), None) {
+        println!("WARNING: Running with no expect block, program will not terminate!");
+    }
+    if let Some(begin) = &program.begin {
+        execute_program(&begin.code_block.as_ref().unwrap(), &mut memory)
+    }
+    loop {
+        execute_program(&program.body, &mut memory);
+        // expect block logic
+        if let Some(ref expect) = program.expect {
+            if calculate_expression(expect.expr.clone().unwrap(), &memory).as_bool() {
+                execute_program(&expect.code_block.as_ref().unwrap(), &mut memory);
+                break;
+            }
+        }
+    }
 }
