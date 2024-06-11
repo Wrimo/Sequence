@@ -59,3 +59,8 @@ a <- 5
 
 print(#a) -- 5
 ```
+
+# Expressions 
+Sequence suppots standard arithmetic, multiplication, and comparative operators. Logical operators are `and`, `or`, and `not`. 
+
+Sequence also supports absolute value as `|` as in `|(x - b)`, factorial with `!4` and exponent with `^`.  
