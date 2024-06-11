@@ -34,6 +34,7 @@ pub struct Expression {
     pub exp_type: ExpressionType, 
     pub lhs: Option<Box<Expression>>, 
     pub rhs: Option<Box<Expression>>, 
+    pub var_name: Option<String>, // used to disambiguate accessor operator
 }
 
 impl Expression { 
@@ -42,6 +43,7 @@ impl Expression {
             exp_type: epx_type, 
             lhs: lhs, 
             rhs: rhs, 
+            var_name: None,
         })
     }
 }

@@ -46,7 +46,8 @@ pub enum TokenType {
     COMMA,
     ACCESSOR,
     LEN,
-    COMMENT, 
+    COMMENT,
+    DOLLAR,
 }
 #[derive(Debug, Clone)]
 pub struct Token {

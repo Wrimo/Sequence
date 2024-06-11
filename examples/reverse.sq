@@ -1,0 +1,14 @@
+begin { 
+    a <- 1
+    a <- 2
+    a <- 3
+    a <- 4
+    a <- 5
+    i <- 1
+}
+expect i == #a + 1 { 
+    reveal a
+    reveal b
+}
+b <- $a::i
+i <- i + 1

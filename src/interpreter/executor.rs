@@ -5,7 +5,6 @@ use super::parser::statement::{Statement, StatementType};
 use super::variable_type::VariableType;
 use crate::user_options::USER_OPTIONS;
 use std::collections::HashMap;
-use std::env::var;
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
@@ -114,24 +113,24 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
             var_history[var_history.len() - 2].clone()
         }
         ExpressionType::ACCESSOR => {
-            if let ExpressionType::IDENTIFIER(s) = lhs.clone().unwrap().exp_type {
-                let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
+            let name = expr.var_name.unwrap();
+
+            if !matches!(lhs, None) {
+                let var_history: &Vec<VariableType> = memory.get(&name).unwrap();
                 // could clean this up with a simpler way to get values out of VariableType
-                if let VariableType::INTEGER(x) = calculate_expression(rhs.unwrap(), &memory).convert_int() {
+                if let VariableType::INTEGER(x) = calculate_expression(lhs.unwrap(), &memory).convert_int() {
                     return var_history[x as usize].clone();
                 }
-            } else if let ExpressionType::IDENTIFIER(s) = rhs.unwrap().exp_type {
-                let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
-                if let VariableType::INTEGER(x) = calculate_expression(lhs.unwrap(), &memory).convert_int() {
-                    return var_history[var_history.len() - (x as usize)].clone();
+            } else if !matches!(rhs, None) {
+                let var_history: &Vec<VariableType> = memory.get(&name).unwrap();
+                if let VariableType::INTEGER(x) = calculate_expression(rhs.unwrap(), &memory).convert_int() {
+                    return var_history[var_history.len() - 1 - (x as usize)].clone();
                 }
             }
             return VariableType::INTEGER(0);
         }
 
-        ExpressionType::LEN(s) => {
-            VariableType::INTEGER(memory.get(&s).unwrap().len() as i64)
-        }
+        ExpressionType::LEN(s) => VariableType::INTEGER(memory.get(&s).unwrap().len() as i64),
 
         _ => VariableType::INTEGER(-1), // should do something else here!
     }
@@ -148,6 +147,10 @@ fn print_variable(x: &VariableType) {
 
 fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<VariableType>>) {
     for statement in program {
+        if USER_OPTIONS.lock().unwrap().debug {
+            println!("{:?}", statement.statement_type.clone());
+        }
+
         match statement.statement_type {
             StatementType::ASSIGN => {
                 let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
@@ -203,9 +206,11 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<Va
 
             StatementType::REVEAL => {
                 let var_history: &Vec<VariableType> = memory.get(&statement.var_name.clone().unwrap()).unwrap();
+                print!("{}: ", statement.var_name.clone().unwrap());
                 for i in 0..var_history.len() {
                     print_variable(&var_history[i]);
                 }
+                println!();
             }
 
             _ => {

@@ -33,6 +33,7 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         ("=:", TokenType::COPY),
         ("#", TokenType::LEN),
         ("--", TokenType::COMMENT),
+        ("$", TokenType::DOLLAR),
     ]
     .into_iter()
     .collect();
@@ -61,7 +62,6 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
     let mut i = 0;
 
     while i < chars.len() {
-        println!("{}", i);
         let chr = chars[i];
 
         if chr == ' ' || chr == '\t' {

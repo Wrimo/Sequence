@@ -217,7 +217,7 @@ impl Parser {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
         } else if self.accept(TokenType::PREV) {
             return Expression::new(ExpressionType::PREV(self.expect_identifier().unwrap()), None, None);
-        } else if self.accept(TokenType::LEN) { 
+        } else if self.accept(TokenType::LEN) {
             let name: Option<String> = self.expect_identifier();
             return Expression::new(ExpressionType::LEN(name.unwrap()), None, None);
         }
@@ -225,15 +225,38 @@ impl Parser {
     }
 
     fn accessor_factor(&mut self) -> Box<Expression> {
-        let mut lhs = self.factor();
-        while self.accept(TokenType::ACCESSOR) {
-            let rhs = self.unary_fact();
-            if !matches!(rhs.exp_type, ExpressionType::IDENTIFIER(_)) && !matches!(lhs.exp_type, ExpressionType::IDENTIFIER(_)) {
-                self.error_custom("one side of accessing must be an identifier")
-            }
-            lhs = Expression::new(ExpressionType::ACCESSOR, Some(lhs), Some(rhs));
+        let mut ident: Option<String> = None;
+        let mut lhs: Option<Box<Expression>> = None; 
+        let mut rhs: Option<Box<Expression>> = None; 
+        if self.accept(TokenType::DOLLAR) {
+            ident = self.expect_identifier();
+        } else {
+            lhs = Some(self.factor());
         }
-        return lhs;
+        while self.accept(TokenType::ACCESSOR) {
+
+            if self.accept(TokenType::DOLLAR) {
+                if !matches!(ident.clone(), None) { 
+                    self.error_custom("multiple histories marked as source"); 
+                }
+                ident = self.expect_identifier();
+            } else { 
+                rhs = Some(self.factor());
+            }
+
+            if matches!(ident, None) {
+                self.error_custom("one side of must be marked an identifier marked as source ($a::1, i::$a, etc)");
+            }
+            let expr = Expression { 
+                exp_type: ExpressionType::ACCESSOR, 
+                lhs: lhs, 
+                rhs: rhs.clone(), 
+                var_name: ident.clone(),
+            };
+            lhs = Some(Box::new(expr));
+            
+        }
+        return lhs.unwrap();
     }
 
     fn factor(&mut self) -> Box<Expression> {
@@ -261,10 +284,9 @@ impl Parser {
         self.stat.reset();
         if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::ASSIGNMENT) {
             self.parse_stmt_assign();
-        } else if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::COPY) { 
+        } else if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::COPY) {
             self.parse_stmt_copy();
-        }
-        else if self.accept(TokenType::BEGIN) {
+        } else if self.accept(TokenType::BEGIN) {
             self.parse_stmt_begin();
         } else if self.accept(TokenType::EXPECT) {
             self.parse_stmt_expect();
@@ -287,9 +309,9 @@ impl Parser {
     }
 
     fn parse_stmt_copy(&mut self) {
-        self.stat.set_type(StatementType::COPY); 
-        self.stat.var_name = self.expect_identifier(); 
-        self.expect(TokenType::COPY); 
+        self.stat.set_type(StatementType::COPY);
+        self.stat.var_name = self.expect_identifier();
+        self.expect(TokenType::COPY);
         self.stat.alt_var_name = self.expect_identifier();
     }
 

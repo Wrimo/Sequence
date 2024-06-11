@@ -1,0 +1,10 @@
+begin {
+    x <- 4
+    approx <- x
+    n <- 1
+}
+expect |(prev approx - approx) <= 0.0001 {  
+    reveal approx
+}
+approx <- approx + (((-1.0) ^ n) * x ^ (2 * n + 1)) / !(2 * n + 1) -- unary minus is broken
+n <- n + 1
