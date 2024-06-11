@@ -217,6 +217,9 @@ impl Parser {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
         } else if self.accept(TokenType::PREV) {
             return Expression::new(ExpressionType::PREV(self.expect_identifier().unwrap()), None, None);
+        } else if self.accept(TokenType::LEN) { 
+            let name: Option<String> = self.expect_identifier();
+            return Expression::new(ExpressionType::LEN(name.unwrap()), None, None);
         }
         return self.accessor_factor();
     }

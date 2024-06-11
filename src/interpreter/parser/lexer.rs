@@ -31,6 +31,7 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         (",", TokenType::COMMA),
         ("::", TokenType::ACCESSOR), 
         ("=:", TokenType::COPY),
+        ("#", TokenType::LEN),
     ]
     .into_iter()
     .collect();

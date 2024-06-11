@@ -43,8 +43,9 @@ pub enum TokenType {
     FACTORIAL,
     EXPONENT,
     ABS,
-    COMMA, 
-    ACCESSOR, 
+    COMMA,
+    ACCESSOR,
+    LEN,
 }
 #[derive(Debug, Clone)]
 pub struct Token {

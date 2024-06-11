@@ -129,7 +129,11 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
             return VariableType::INTEGER(0);
         }
 
-        _ => VariableType::INTEGER(-1),
+        ExpressionType::LEN(s) => {
+            VariableType::INTEGER(memory.get(&s).unwrap().len() as i64)
+        }
+
+        _ => VariableType::INTEGER(-1), // should do something else here!
     }
 }
 
