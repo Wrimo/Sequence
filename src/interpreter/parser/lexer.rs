@@ -29,9 +29,10 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         ("!", TokenType::FACTORIAL),
         ("^", TokenType::EXPONENT),
         (",", TokenType::COMMA),
-        ("::", TokenType::ACCESSOR), 
+        ("::", TokenType::ACCESSOR),
         ("=:", TokenType::COPY),
         ("#", TokenType::LEN),
+        ("--", TokenType::COMMENT),
     ]
     .into_iter()
     .collect();
@@ -56,12 +57,13 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
 
     let mut tokens: Vec<Token> = Vec::new();
     let chars: Vec<char> = input.chars().collect();
-    let mut line_number = 0; 
+    let mut line_number = 0;
     let mut i = 0;
 
     while i < chars.len() {
+        println!("{}", i);
         let chr = chars[i];
-        
+
         if chr == ' ' || chr == '\t' {
             i += 1;
             continue;
@@ -69,18 +71,30 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
 
         let mut token = Token {
             token_type: TokenType::NONE,
-            line: line_number, 
+            line: line_number,
         };
 
         if chr == '\n' {
-            line_number += 1; 
-            i += 1; 
-            token.token_type = TokenType::NEWLINE; 
-            tokens.push(token);
+            line_number += 1;
+            i += 1;
+            token.token_type = TokenType::NEWLINE;
+
+            if tokens[tokens.len() - 1].token_type != TokenType::NEWLINE {
+                tokens.push(token);
+            }
             continue;
         }
         // is_sym will handle incrementing `i`.
         if let Some(t) = is_sym(&mut i, max_symlen) {
+            if *t == TokenType::COMMENT {
+                loop { // ignore rest of current line
+                    i += 1;
+                    if i >= chars.len() || chars[i] == '\n' {
+                        break;
+                    }
+                }
+                continue;
+            }
             token.token_type = t.clone();
         } else if chr.is_alphabetic() || chr == '_' {
             let mut j = i;
@@ -118,13 +132,13 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
-    tokens.push(Token { 
-        token_type: TokenType::NEWLINE, 
-        line: line_number + 1, 
+    tokens.push(Token {
+        token_type: TokenType::NEWLINE,
+        line: line_number + 1,
     });
 
-    if USER_OPTIONS.lock().unwrap().debug { 
-        for i in 0..tokens.len(){ 
+    if USER_OPTIONS.lock().unwrap().debug {
+        for i in 0..tokens.len() {
             println!("{:?}", tokens[i]);
         }
     }
