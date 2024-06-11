@@ -60,6 +60,33 @@ a <- 5
 print(#a) -- 5
 ```
 
+The deep copy operator `=:` allows one history to be replaced by another. 
+
+```
+a <- 1
+a <- 2
+a <- 3
+
+b <- 1
+b <- 2
+
+print(#b) -- 2
+
+b =: a -- b is now an indentical copy of a
+
+print(#b) -- 3
+print(a == b) -- true
+```
+
+The `reveal` statement can be used to print the entire history. 
+
+```
+a <- 1
+a <- 2
+a <- 3
+reveal a -- 1 2 3 
+```
+
 # Expressions 
 Sequence suppots standard arithmetic, multiplication, and comparative operators. Logical operators are `and`, `or`, and `not`. 
 
