@@ -118,7 +118,6 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
                 let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
                 // could clean this up with a simpler way to get values out of VariableType
                 if let VariableType::INTEGER(x) = calculate_expression(rhs.unwrap(), &memory).convert_int() {
-                    
                     return var_history[x as usize].clone();
                 }
             } else if let ExpressionType::IDENTIFIER(s) = rhs.unwrap().exp_type {
@@ -155,6 +154,19 @@ fn execute_program(program: &Vec<Statement>, memory: &mut HashMap<String, Vec<Va
                     .and_modify(|ent| ent.push(val.clone()))
                     .or_insert(vec![val.clone()]);
             }
+
+            StatementType::COPY => {
+                let destination = statement.var_name.as_ref().unwrap().to_string();
+                let source = statement.alt_var_name.as_ref().unwrap().to_string();
+
+                let history: Vec<VariableType> = memory.get(&source).unwrap().clone();
+
+                memory
+                    .entry(destination)
+                    .and_modify(|ent| *ent = history.clone())
+                    .or_insert(history);
+            }
+
             StatementType::PRINT => {
                 let exp = statement.expr.as_ref().unwrap();
                 if matches!(exp.exp_type, ExpressionType::NONE) {
@@ -204,7 +216,8 @@ pub fn run_program(input: &str) {
     let mut parser = Parser::new(tokens);
 
     let program = parser.run();
-    let mut memory: HashMap<String, Vec<VariableType>> = HashMap::new();
+    let mut memory: HashMap<String, Vec<VariableType>> = HashMap::new(); // probably a good idea to rewrite this as a struct with its own functions
+
     if USER_OPTIONS.lock().unwrap().debug {
         println!("program length: {}\n\n", program.body.len());
         for i in &program.body {

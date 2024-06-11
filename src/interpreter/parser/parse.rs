@@ -36,7 +36,7 @@ impl Parser {
     }
 
     fn error_custom(&self, msg: &str) {
-        eprintln!("line {}: {}", self.current_token.line, msg);
+        eprintln!("line {}: {}", self.current_token.line + 1, msg);
         assert!(false);
     }
 
@@ -258,7 +258,10 @@ impl Parser {
         self.stat.reset();
         if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::ASSIGNMENT) {
             self.parse_stmt_assign();
-        } else if self.accept(TokenType::BEGIN) {
+        } else if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::COPY) { 
+            self.parse_stmt_copy();
+        }
+        else if self.accept(TokenType::BEGIN) {
             self.parse_stmt_begin();
         } else if self.accept(TokenType::EXPECT) {
             self.parse_stmt_expect();
@@ -269,23 +272,22 @@ impl Parser {
         } else if self.accept(TokenType::IF) {
             self.parse_stmt_if();
         } else {
-            self.error_custom("expected statement");
+            self.error_custom("unknown statement");
         }
     }
 
     fn parse_stmt_assign(&mut self) {
         self.stat.set_type(StatementType::ASSIGN);
-
-        match self.current_token.token_type.clone() {
-            TokenType::IDENTIFIER(s) => {
-                self.stat.var_name = Some(s);
-                self.next_token();
-            }
-            _ => self.error_missing_token(TokenType::IDENTIFIER(String::from(""))),
-        }
-
+        self.stat.var_name = self.expect_identifier();
         self.expect(TokenType::ASSIGNMENT);
         self.stat.expr = Some(self.expr());
+    }
+
+    fn parse_stmt_copy(&mut self) {
+        self.stat.set_type(StatementType::COPY); 
+        self.stat.var_name = self.expect_identifier(); 
+        self.expect(TokenType::COPY); 
+        self.stat.alt_var_name = self.expect_identifier();
     }
 
     fn parse_stmt_begin(&mut self) {

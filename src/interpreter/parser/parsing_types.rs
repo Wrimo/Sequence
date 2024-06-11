@@ -5,6 +5,7 @@ pub enum TokenType {
     NONE,
     IDENTIFIER(String),
     ASSIGNMENT,
+    COPY,
     INTEGER(i64),
     STRING(String),
     FLOAT(f64),

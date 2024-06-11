@@ -6,6 +6,7 @@ pub enum StatementType {
     PRINT,
     REVEAL,
     ASSIGN,
+    COPY, 
     IF,
     BEGIN,
     EXPECT,
@@ -15,6 +16,7 @@ pub enum StatementType {
 pub struct Statement {
     pub statement_type: StatementType,
     pub var_name: Option<String>,
+    pub alt_var_name: Option<String>, 
     pub code_block: Option<Vec<Statement>>,
     pub expr: Option<Box<Expression>>,
     pub alt_code_blocks: Vec<Vec<Statement>>,
@@ -46,6 +48,7 @@ impl Statement {
         Statement { 
             statement_type: StatementType::NONE, 
             var_name: None, 
+            alt_var_name: None,
             code_block: None, 
             expr: None, 
             alt_code_blocks: Vec::new(), 
