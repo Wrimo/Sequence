@@ -13,7 +13,7 @@ expect true {
     print(1 + 1)
 }
 ``` 
-This program prints 2 and then terminates. Expect block are checked before running the body of program on each loop (including the first). If the expresion is evaluates as true, the code block is executed and then the program terminates. Running a program without an expect block will generate warning.
+This program prints 2 and then terminates. Expect block are checked after running the body of program on each loop (including the first). If the expresion is evaluates as true, the code block is executed and then the program terminates. Running a program without an expect block will generate warning.
 
 The `begin` executes only the first time the program executes. 
 ```
