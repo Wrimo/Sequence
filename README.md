@@ -49,6 +49,8 @@ print(prev a == $a::1) -- true
 print(a == $a::0) -- true
 ```
 
+Previous values are read-only, so `$a::1 <- 5` is not allowed.
+
 The len of a history is returned by the `#` operator. 
 ```
 a <- 1
