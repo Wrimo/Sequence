@@ -228,13 +228,15 @@ pub fn run_program(input: &str) {
     let mut memory: HashMap<String, Vec<VariableType>> = HashMap::new(); // probably a good idea to rewrite this as a struct with its own functions
 
     if USER_OPTIONS.lock().unwrap().debug {
+        println!("{:?}", program.begin); 
+        println!("{:?}", program.expect);
         println!("program length: {}\n\n", program.body.len());
         for i in &program.body {
             println!("{:?}", i);
         }
     }
 
-    if program.expect.len() != 0 {
+    if program.expect.len() == 0 {
         println!("WARNING: Running with no expect block, program will not terminate!");
     }
     if let Some(begin) = &program.begin {

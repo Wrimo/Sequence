@@ -4,9 +4,10 @@ begin {
     a <- 3
     a <- 4
     a <- 5
-    i <- 1
+
+    i <- 0
 }
-expect i == #a + 1 { 
+expect i == #a { 
     reveal a
     reveal b
 }
