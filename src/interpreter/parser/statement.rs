@@ -25,7 +25,7 @@ pub struct Statement {
 
 pub struct Program {
     pub begin: Option<Statement>,
-    pub expect: Option<Statement>,
+    pub expect: Vec<Statement>,
     pub body: Vec<Statement>,
 }
 
@@ -33,7 +33,7 @@ impl Program {
     pub fn new() -> Program { 
         Program { 
             begin: None, 
-            expect: None, 
+            expect: Vec::new(), 
             body: Vec::new(), 
         }
     }

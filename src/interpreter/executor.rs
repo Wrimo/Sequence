@@ -234,19 +234,20 @@ pub fn run_program(input: &str) {
         }
     }
 
-    if matches!(program.expect.as_ref(), None) {
+    if program.expect.len() != 0 {
         println!("WARNING: Running with no expect block, program will not terminate!");
     }
     if let Some(begin) = &program.begin {
         execute_program(&begin.code_block.as_ref().unwrap(), &mut memory)
     }
-    loop {
+    'prog_loop: loop {
         execute_program(&program.body, &mut memory);
         // expect block logic
-        if let Some(ref expect) = program.expect {
-            if calculate_expression(expect.expr.clone().unwrap(), &memory).as_bool() {
-                execute_program(&expect.code_block.as_ref().unwrap(), &mut memory);
-                break;
+
+        for i in 0..program.expect.len() { 
+            if calculate_expression(program.expect[i].expr.clone().unwrap(), &memory).as_bool() { 
+                execute_program(program.expect[i].code_block.as_ref().unwrap(), &mut memory);
+                break 'prog_loop;
             }
         }
     }

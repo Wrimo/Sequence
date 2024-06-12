@@ -94,7 +94,7 @@ impl Parser {
 
             match self.stat.statement_type {
                 StatementType::BEGIN => self.prog.begin = Some(self.stat.clone()),
-                StatementType::EXPECT => self.prog.expect = Some(self.stat.clone()),
+                StatementType::EXPECT => self.prog.expect.push(self.stat.clone()),
                 _ => self.prog.add(self.stat.clone()),
             }
             self.stat.reset();
