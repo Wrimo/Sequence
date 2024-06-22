@@ -43,7 +43,7 @@ a <- 4
 a <- 5
 
 print($a::1) -- 4
-print(2::$a) -- 4
+print(2::$a) -- 3
 
 print(prev a == $a::1) -- true 
 print(a == $a::0) -- true
