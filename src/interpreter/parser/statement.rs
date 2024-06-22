@@ -10,6 +10,7 @@ pub enum StatementType {
     IF,
     BEGIN,
     EXPECT,
+    RUN(String),
 }
 
 #[derive(Clone, Debug)]
@@ -23,6 +24,7 @@ pub struct Statement {
     pub alt_exps: Vec<Box<Expression>>,
 }
 
+#[derive(Clone)]
 pub struct Program {
     pub begin: Option<Statement>,
     pub expect: Vec<Statement>,

@@ -280,6 +280,13 @@ impl Parser {
         }
     }
 
+    fn parse_string(&mut self) -> String { 
+        self.expect(TokenType::QUOTE);
+        let s = self.expect_identifier().unwrap(); 
+        self.expect(TokenType::QUOTE);
+        return s;
+    }
+
     fn statement(&mut self) {
         self.stat.reset();
         if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::ASSIGNMENT) {
@@ -296,7 +303,10 @@ impl Parser {
             self.parse_stmt_print();
         } else if self.accept(TokenType::IF) {
             self.parse_stmt_if();
-        } else {
+        } else if self.accept(TokenType::RUN) { 
+            self.parse_stmt_call();
+        }
+        else {
             self.error_custom("unknown statement");
         }
     }
@@ -366,5 +376,11 @@ impl Parser {
             let block = self.code_block();
             self.stat.alt_code_blocks.push(block);
         }
+    }
+
+    fn parse_stmt_call(&mut self) { 
+        let s = self.parse_string(); 
+        self.stat.set_type(StatementType::RUN(s));
+        // need to add way to expose variables to other program
     }
 }

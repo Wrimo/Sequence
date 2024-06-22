@@ -33,6 +33,7 @@ pub enum TokenType {
     PREV,
     BEGIN,
     EXPECT,
+    RUN,
     REVEAL,
     IF,
     ELSE,
@@ -48,6 +49,7 @@ pub enum TokenType {
     LEN,
     COMMENT,
     DOLLAR,
+    QUOTE,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -98,17 +100,19 @@ impl FromStr for TokenType {
             "REVEAL" => Ok(TokenType::REVEAL),
             "EXPECT" => Ok(TokenType::EXPECT),
             "IF" => Ok(TokenType::IF),
-            "ELSE" => Ok(TokenType::ELSE), 
-            "ELIF" => Ok(TokenType::ELIF), 
+            "ELSE" => Ok(TokenType::ELSE),
+            "ELIF" => Ok(TokenType::ELIF),
             "AND" => Ok(TokenType::AND), 
-            "OR" => Ok(TokenType::OR), 
+            "OR" => Ok(TokenType::OR),
             "NOT" => Ok(TokenType::NOT),
-            "ABS" => Ok(TokenType::ABS), 
+            "ABS" => Ok(TokenType::ABS),
             "FACTORIAL" => Ok(TokenType::FACTORIAL),
             "EXPONENT" => Ok(TokenType::EXPONENT),
             "VERTICALBAR" => Ok(TokenType::VERTICALBAR),
-            "COMMA" => Ok(TokenType::COMMA), 
+            "COMMA" => Ok(TokenType::COMMA),
             "ACCESSOR" => Ok(TokenType::ACCESSOR), 
+            "QUOTE" => Ok(TokenType::QUOTE),
+            "RUN" => Ok(TokenType::RUN),
             _ => return Err(()),
         }
     }

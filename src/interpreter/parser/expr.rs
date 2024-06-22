@@ -25,6 +25,7 @@ pub enum ExpressionType {
     BOOL(bool),
     INTEGER(i64),
     FLOAT(f64),
+    STRING(String),
     LEN(String),
     NONE,
 }

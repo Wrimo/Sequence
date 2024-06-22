@@ -34,6 +34,7 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         ("#", TokenType::LEN),
         ("--", TokenType::COMMENT),
         ("$", TokenType::DOLLAR),
+        ("\"", TokenType::QUOTE),
     ]
     .into_iter()
     .collect();

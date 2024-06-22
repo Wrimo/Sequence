@@ -1,0 +1,29 @@
+begin { -- leaves extra 0 at start of sorted list
+    a <- 4
+    a <- 3
+    a <- 1
+    a <- 5
+    a <- 2
+
+    i <- 0
+    j <- 0
+    min <- i::$a
+    sorted <- 0
+}
+expect i == #a { 
+    reveal a
+    reveal sorted
+}
+
+if j::$a > sorted and (min == 0 or j::$a < min) { 
+    min <- j::$a
+}
+
+if j != (#a - 1) { 
+    j <- j + 1
+} else { 
+    i <- i + 1
+    j <- 0
+    sorted <- min
+    min <- 0
+}
