@@ -10,7 +10,7 @@ pub enum StatementType {
     IF,
     BEGIN,
     EXPECT,
-    RUN(String),
+    RUN,
 }
 
 #[derive(Clone, Debug)]
@@ -22,9 +22,10 @@ pub struct Statement {
     pub expr: Option<Box<Expression>>,
     pub alt_code_blocks: Vec<Vec<Statement>>,
     pub alt_exps: Vec<Box<Expression>>,
+    pub sub_program: Option<Box<Program>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Program {
     pub begin: Option<Statement>,
     pub expect: Vec<Statement>,
@@ -55,6 +56,7 @@ impl Statement {
             expr: None, 
             alt_code_blocks: Vec::new(), 
             alt_exps: Vec::new(), 
+            sub_program: None,
         }
     }
     pub fn set_type(&mut self, t: StatementType) { 

@@ -149,7 +149,6 @@ fn print_variable(x: &VariableType) {
 fn run_statements(
     program: &Vec<Statement>,
     memory: &mut HashMap<String, Vec<VariableType>>,
-    statement_cache: &mut HashMap<String, Program>,
 ) {
     for statement in program {
         if USER_OPTIONS.lock().unwrap().debug {
@@ -197,12 +196,12 @@ fn run_statements(
 
             StatementType::IF => {
                 if calculate_expression(statement.expr.clone().unwrap(), &memory).as_bool() {
-                    run_statements(&statement.code_block.as_ref().unwrap(), memory, statement_cache);
+                    run_statements(&statement.code_block.as_ref().unwrap(), memory);
                 } else if statement.alt_code_blocks.len() != 0 {
                     for i in 0..statement.alt_code_blocks.len() {
                         if i >= statement.alt_exps.len() || calculate_expression(statement.alt_exps[i].clone(), memory).as_bool()
                         {
-                            run_statements(&statement.alt_code_blocks[i], memory, statement_cache);
+                            run_statements(&statement.alt_code_blocks[i], memory);
                             break;
                         }
                     }
@@ -218,16 +217,8 @@ fn run_statements(
                 println!();
             }
 
-            StatementType::RUN(s) => {
-                let x = statement_cache.get(&s);
-           
-                if matches!(x, None) {
-                    let prog = parse_cache_file(s, statement_cache);
-                    execute_program(&prog, statement_cache)
-                }
-                else { 
-                    execute_program(&(x.unwrap()).clone(), statement_cache);
-                }
+            StatementType::RUN => {
+                execute_program(statement.sub_program.as_ref().unwrap());
             }
 
             _ => {
@@ -237,21 +228,7 @@ fn run_statements(
     }
 }
 
-fn parse_cache_file(name: String, statement_cache: &mut HashMap<String, Program>) -> Program { 
-    let buf = fs::read_to_string(&name).unwrap_or_else(|_| {
-        eprintln!("could not read file: {}", name);
-        process::exit(1);
-    });
-
-    let tokens = symbol_analysis(&buf).unwrap();
-    let mut parser = Parser::new(tokens);
-    let prog = parser.run(); 
-
-    statement_cache.insert(name.clone(), prog.clone()); 
-    return statement_cache.get(&name).unwrap().clone(); 
-}
-
-pub fn execute_program(program: &Program, statement_cache: &mut HashMap<String, Program>) {
+pub fn execute_program(program: &Program) {
     let mut memory: HashMap<String, Vec<VariableType>> = HashMap::new(); // probably a good idea to rewrite this as a struct with its own functions
 
     if USER_OPTIONS.lock().unwrap().debug {
@@ -267,14 +244,14 @@ pub fn execute_program(program: &Program, statement_cache: &mut HashMap<String, 
         println!("WARNING: Running with no expect block, program will not terminate!");
     }
     if let Some(begin) = &program.begin {
-        run_statements(&begin.code_block.as_ref().unwrap(), &mut memory, statement_cache)
+        run_statements(&begin.code_block.as_ref().unwrap(), &mut memory);
     }
     'prog_loop: loop {
-        run_statements(&program.body, &mut memory, statement_cache);
+        run_statements(&program.body, &mut memory);
         // expect block logic
         for i in 0..program.expect.len() {
             if calculate_expression(program.expect[i].expr.clone().unwrap(), &memory).as_bool() {
-                run_statements(program.expect[i].code_block.as_ref().unwrap(), &mut memory, statement_cache);
+                run_statements(program.expect[i].code_block.as_ref().unwrap(), &mut memory);
                 break 'prog_loop;
             }
         }

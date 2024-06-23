@@ -1,26 +1,33 @@
+use std::collections::HashMap;
+use std::{fs, process};
+
 use super::expr::{Expression, ExpressionType};
+use super::lexer::symbol_analysis;
 use super::parsing_types::{Token, TokenType};
 use super::statement::{Program, Statement, StatementType};
 
-pub struct Parser {
+pub struct Parser<'a> {
     current_token: Token,
     tokens: Vec<Token>,
     index: usize,
     prog: Program,
     stat: Statement,
+    prog_cache: &'a mut HashMap<String, Box<Program>>,
 }
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<Token>, prog_cache: &mut HashMap<String, Box<Program>>) -> Parser {
         Parser {
             current_token: tokens[0].clone(),
             tokens: tokens,
             index: 0,
             prog: Program::new(),
             stat: Statement::new(),
+            prog_cache: prog_cache,
         }
     }
 
     pub fn run(&mut self) -> &Program {
+        println!("parsing");
         self.body();
         return &self.prog;
     }
@@ -226,35 +233,33 @@ impl Parser {
 
     fn accessor_factor(&mut self) -> Box<Expression> {
         let mut ident: Option<String> = None;
-        let mut lhs: Option<Box<Expression>> = None; 
-        let mut rhs: Option<Box<Expression>> = None; 
+        let mut lhs: Option<Box<Expression>> = None;
+        let mut rhs: Option<Box<Expression>> = None;
         if self.accept(TokenType::DOLLAR) {
             ident = self.expect_identifier();
         } else {
             lhs = Some(self.factor());
         }
         while self.accept(TokenType::ACCESSOR) {
-
             if self.accept(TokenType::DOLLAR) {
-                if !matches!(ident.clone(), None) { 
-                    self.error_custom("multiple histories marked as source"); 
+                if !matches!(ident.clone(), None) {
+                    self.error_custom("multiple histories marked as source");
                 }
                 ident = self.expect_identifier();
-            } else { 
+            } else {
                 rhs = Some(self.factor());
             }
 
             if matches!(ident, None) {
                 self.error_custom("one side of must be marked an identifier marked as source ($a::1, i::$a, etc)");
             }
-            let expr = Expression { 
-                exp_type: ExpressionType::ACCESSOR, 
-                lhs: lhs, 
-                rhs: rhs.clone(), 
+            let expr = Expression {
+                exp_type: ExpressionType::ACCESSOR,
+                lhs: lhs,
+                rhs: rhs.clone(),
                 var_name: ident.clone(),
             };
             lhs = Some(Box::new(expr));
-            
         }
         return lhs.unwrap();
     }
@@ -280,9 +285,9 @@ impl Parser {
         }
     }
 
-    fn parse_string(&mut self) -> String { 
+    fn parse_string(&mut self) -> String {
         self.expect(TokenType::QUOTE);
-        let s = self.expect_identifier().unwrap(); 
+        let s = self.expect_identifier().unwrap();
         self.expect(TokenType::QUOTE);
         return s;
     }
@@ -303,11 +308,8 @@ impl Parser {
             self.parse_stmt_print();
         } else if self.accept(TokenType::IF) {
             self.parse_stmt_if();
-        } else if self.accept(TokenType::RUN) { 
+        } else if self.accept(TokenType::RUN) {
             self.parse_stmt_call();
-        }
-        else {
-            self.error_custom("unknown statement");
         }
     }
 
@@ -378,9 +380,28 @@ impl Parser {
         }
     }
 
-    fn parse_stmt_call(&mut self) { 
-        let s = self.parse_string(); 
-        self.stat.set_type(StatementType::RUN(s));
+    fn parse_stmt_call(&mut self) {
+        let file_name = self.parse_string();
+        self.stat.set_type(StatementType::RUN);
+
+        // need to cache to avoid parsing same program twice
+
+        let x = self.prog_cache.get(&file_name);
+
+        if matches!(x, None) {
+            let buf = fs::read_to_string(&file_name).unwrap_or_else(|_| {
+                eprintln!("could not read file: {}", file_name);
+                process::exit(1);
+            });
+            let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache);
+            let prog = Box::new(p.run().clone());
+            self.stat.sub_program = Some(prog.clone()); 
+            self.prog_cache.insert(file_name, prog);
+        }
+        else { 
+            self.stat.sub_program = Some((x.unwrap()).clone()); // cleaner way to write?
+        }
+
         // need to add way to expose variables to other program
     }
 }

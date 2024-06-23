@@ -25,6 +25,9 @@ fn main() {
     // BUGS:
     // [] a <- 2 * not false fails the parsers 
 
+    // current prog calls prog2 calls prog3 which is a copy of sort.sq takes 
+    // 8 seconds to run. how much can that be reduced by improving call procedure?
+
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {usage(&args[0])};
     for i in 1..args.len() - 1 {
