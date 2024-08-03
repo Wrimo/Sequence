@@ -15,5 +15,5 @@ pub fn run_program(input: &str) {
     let mut parser = parse::Parser::new(tokens, &mut prog_cache);
     let prog = parser.run(); 
 
-    interpreter::execute_program(prog); 
+    interpreter::execute_program(prog, None); 
 }

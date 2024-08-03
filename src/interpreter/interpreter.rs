@@ -1,11 +1,8 @@
 use super::parser::expr::{Expression, ExpressionType};
-use super::parser::lexer::symbol_analysis;
-use super::parser::parse::Parser;
-use super::parser::statement::{self, Program, Statement, StatementType};
-use super::variable_type::VariableType;
+use super::parser::statement::{Program, Statement, StatementType};
+use super::runtime_types::{History, Memory, VariableType};
+use crate::interpreter::runtime_types::SharedHistory;
 use crate::user_options::USER_OPTIONS;
-use std::collections::HashMap;
-use std::{fs, process};
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
@@ -47,7 +44,7 @@ macro_rules! perform_log_op {
     }
 }
 
-pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<VariableType>>) -> VariableType {
+pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> VariableType {
     let lhs = expr.lhs;
     let rhs = expr.rhs;
     match expr.exp_type {
@@ -103,35 +100,36 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &HashMap<String, Vec<
         ExpressionType::BOOL(x) => VariableType::BOOL(x),
 
         ExpressionType::IDENTIFIER(s) => {
-            let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
-            var_history[var_history.len() - 1].clone()
+            let history: SharedHistory = memory.get_history(s);
+            let borrow = history.borrow();
+            borrow.get_past(borrow.len() - 1).clone()
         }
         ExpressionType::PREV(s) => {
-            let var_history: &Vec<VariableType> = memory.get(&s).unwrap();
-            if var_history.len() == 1 {
-                return var_history[0].clone();
+            let var_history: SharedHistory = memory.get_history(s);
+            let borrow = var_history.borrow();
+            if borrow.len() == 1 {
+                return borrow.get_past(0).clone();
             }
-            var_history[var_history.len() - 2].clone()
+            borrow.get_past(borrow.len() - 2).clone()
         }
         ExpressionType::ACCESSOR => {
             let name = expr.var_name.unwrap();
+            let var_history: History = memory.get_history(name).borrow().clone();
 
             if !matches!(lhs, None) {
-                let var_history: &Vec<VariableType> = memory.get(&name).unwrap();
                 // could clean this up with a simpler way to get values out of VariableType
-                if let VariableType::INTEGER(x) = calculate_expression(lhs.unwrap(), &memory).convert_int() {
-                    return var_history[x as usize].clone();
+                if let VariableType::INTEGER(x) = calculate_expression(lhs.unwrap(), memory).convert_int() {
+                    return var_history.get_past(x as usize).clone();
                 }
             } else if !matches!(rhs, None) {
-                let var_history: &Vec<VariableType> = memory.get(&name).unwrap();
-                if let VariableType::INTEGER(x) = calculate_expression(rhs.unwrap(), &memory).convert_int() {
-                    return var_history[var_history.len() - 1 - (x as usize)].clone();
+                if let VariableType::INTEGER(x) = calculate_expression(rhs.unwrap(), memory).convert_int() {
+                    return var_history.get_past(var_history.len() - 1 - (x as usize)).clone();
                 }
             }
             return VariableType::INTEGER(0);
         }
 
-        ExpressionType::LEN(s) => VariableType::INTEGER(memory.get(&s).unwrap().len() as i64),
+        ExpressionType::LEN(s) => VariableType::INTEGER(memory.get_history(s).borrow().len() as i64),
 
         _ => VariableType::INTEGER(-1), // should do something else here!
     }
@@ -148,7 +146,7 @@ fn print_variable(x: &VariableType) {
 
 fn run_statements(
     program: &Vec<Statement>,
-    memory: &mut HashMap<String, Vec<VariableType>>,
+    memory: &mut Memory,
 ) {
     for statement in program {
         if USER_OPTIONS.lock().unwrap().debug {
@@ -157,25 +155,17 @@ fn run_statements(
 
         match statement.statement_type.clone() {
             StatementType::ASSIGN => {
-                let val = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                let val = calculate_expression(statement.expr.clone().unwrap(), memory);
                 let name: String = statement.var_name.clone().unwrap();
 
-                memory
-                    .entry(name)
-                    .and_modify(|ent| ent.push(val.clone()))
-                    .or_insert(vec![val.clone()]);
+                memory.update_history(name, val);
             }
 
             StatementType::COPY => {
                 let destination = statement.var_name.as_ref().unwrap().to_string();
                 let source = statement.alt_var_name.as_ref().unwrap().to_string();
 
-                let history: Vec<VariableType> = memory.get(&source).unwrap().clone();
-
-                memory
-                    .entry(destination)
-                    .and_modify(|ent| *ent = history.clone())
-                    .or_insert(history);
+                memory.copy(source, destination);
             }
 
             StatementType::PRINT => {
@@ -184,18 +174,18 @@ fn run_statements(
                     println!("");
                     continue;
                 }
-                let x = calculate_expression(statement.expr.clone().unwrap(), &memory);
+                let x = calculate_expression(statement.expr.clone().unwrap(), memory);
                 print_variable(&x);
 
                 for i in 0..statement.alt_exps.len() {
-                    let x = calculate_expression(statement.alt_exps[i].clone(), &memory);
+                    let x = calculate_expression(statement.alt_exps[i].clone(), memory);
                     print_variable(&x);
                 }
                 println!("");
             }
 
             StatementType::IF => {
-                if calculate_expression(statement.expr.clone().unwrap(), &memory).as_bool() {
+                if calculate_expression(statement.expr.clone().unwrap(), memory).as_bool() {
                     run_statements(&statement.code_block.as_ref().unwrap(), memory);
                 } else if statement.alt_code_blocks.len() != 0 {
                     for i in 0..statement.alt_code_blocks.len() {
@@ -209,16 +199,22 @@ fn run_statements(
             }
 
             StatementType::REVEAL => {
-                let var_history: &Vec<VariableType> = memory.get(&statement.var_name.clone().unwrap()).unwrap();
+
+                let var_history: SharedHistory = memory.get_history(statement.var_name.clone().unwrap());
                 print!("{}: ", statement.var_name.clone().unwrap());
-                for i in 0..var_history.len() {
-                    print_variable(&var_history[i]);
+                for i in 0..var_history.borrow().len() {
+                    print_variable(&var_history.borrow().get_past(i));
                 }
                 println!();
             }
 
             StatementType::RUN => {
-                execute_program(statement.sub_program.as_ref().unwrap());
+                let mut shared_memory: Memory = Memory::new(); 
+                println!("{}", statement.var_list.as_ref().unwrap().len());
+                for var in statement.var_list.as_ref().unwrap() { 
+                    shared_memory.insert_history(var.clone(), memory.get_history(var.to_string()))
+                }
+                execute_program(statement.sub_program.as_ref().unwrap(), Some(shared_memory));
             }
 
             _ => {
@@ -228,10 +224,13 @@ fn run_statements(
     }
 }
 
-pub fn execute_program(program: &Program) {
-    let mut memory: HashMap<String, Vec<VariableType>> = HashMap::new(); // probably a good idea to rewrite this as a struct with its own functions
+pub fn execute_program(program: &Program, shared_memory: Option<Memory>) {
+    let mut memory = match shared_memory {
+        Some(x) => x, 
+        None => Memory::new(),
+    };
 
-    if USER_OPTIONS.lock().unwrap().debug {
+    if USER_OPTIONS.lock().unwrap().debug { // probably should move this up so all programs are printed once, not once per run
         println!("{:?}", program.begin);
         println!("{:?}", program.expect);
         println!("program length: {}\n\n", program.body.len());
@@ -250,7 +249,7 @@ pub fn execute_program(program: &Program) {
         run_statements(&program.body, &mut memory);
         // expect block logic
         for i in 0..program.expect.len() {
-            if calculate_expression(program.expect[i].expr.clone().unwrap(), &memory).as_bool() {
+            if calculate_expression(program.expect[i].expr.clone().unwrap(), &mut memory).as_bool() {
                 run_statements(program.expect[i].code_block.as_ref().unwrap(), &mut memory);
                 break 'prog_loop;
             }

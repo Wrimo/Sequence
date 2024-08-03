@@ -27,7 +27,6 @@ impl<'a> Parser<'a> {
     }
 
     pub fn run(&mut self) -> &Program {
-        println!("parsing");
         self.body();
         return &self.prog;
     }
@@ -39,12 +38,12 @@ impl<'a> Parser<'a> {
             t,
             self.current_token.token_type
         );
-        assert!(false);
+        process::abort();
     }
 
     fn error_custom(&self, msg: &str) {
         eprintln!("line {}: {}", self.current_token.line + 1, msg);
-        assert!(false);
+        process::abort();
     }
 
     fn next_token(&mut self) -> Token {
@@ -286,10 +285,17 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_string(&mut self) -> String {
-        self.expect(TokenType::QUOTE);
-        let s = self.expect_identifier().unwrap();
-        self.expect(TokenType::QUOTE);
-        return s;
+        match self.current_token.token_type.clone() {
+            TokenType::STRING(s) => {
+                self.next_token();
+                return s;
+            }
+
+            _ => {
+                self.error_custom(format!("expected STRING, got {:?}", self.current_token).as_str());
+                process::abort();
+            }
+        }
     }
 
     fn statement(&mut self) {
@@ -384,8 +390,6 @@ impl<'a> Parser<'a> {
         let file_name = self.parse_string();
         self.stat.set_type(StatementType::RUN);
 
-        // need to cache to avoid parsing same program twice
-
         let x = self.prog_cache.get(&file_name);
 
         if matches!(x, None) {
@@ -395,13 +399,24 @@ impl<'a> Parser<'a> {
             });
             let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache);
             let prog = Box::new(p.run().clone());
-            self.stat.sub_program = Some(prog.clone()); 
+            self.stat.sub_program = Some(prog.clone());
             self.prog_cache.insert(file_name, prog);
-        }
-        else { 
+        } else {
             self.stat.sub_program = Some((x.unwrap()).clone()); // cleaner way to write?
         }
 
         // need to add way to expose variables to other program
+        if self.accept(TokenType::WITH) {
+            let mut shared: Vec<String> = Vec::new();
+            loop {
+                let ident: String = self.expect_identifier().unwrap();
+                shared.push(ident);
+                
+                if !self.accept(TokenType::COMMA) { 
+                    break; 
+                }
+            }
+            self.stat.var_list = Some(shared);
+        }
     }
 }

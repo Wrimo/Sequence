@@ -50,6 +50,7 @@ pub enum TokenType {
     COMMENT,
     DOLLAR,
     QUOTE,
+    WITH,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -113,6 +114,7 @@ impl FromStr for TokenType {
             "ACCESSOR" => Ok(TokenType::ACCESSOR), 
             "QUOTE" => Ok(TokenType::QUOTE),
             "RUN" => Ok(TokenType::RUN),
+            "WITH" => Ok(TokenType::WITH),
             _ => return Err(()),
         }
     }
