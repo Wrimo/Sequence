@@ -30,7 +30,7 @@ pub enum ExpressionType {
     NONE,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Expression { 
     pub exp_type: ExpressionType, 
     pub lhs: Option<Box<Expression>>, 
