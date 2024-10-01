@@ -210,7 +210,6 @@ fn run_statements(
 
             StatementType::RUN => {
                 let mut shared_memory: Memory = Memory::new(); 
-                println!("{}", statement.var_list.as_ref().unwrap().len());
                 for var in statement.var_list.as_ref().unwrap() { 
                     shared_memory.insert_history(var.clone(), memory.get_history(var.to_string()))
                 }

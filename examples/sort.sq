@@ -1,29 +1,25 @@
-begin { -- leaves extra 0 at start of sorted list
-    a <- 4
-    a <- 3
+begin {  -- sort breaks for lists with repeated values and negative numbers
     a <- 1
+    a <- 3  
     a <- 5
     a <- 2
+    a <- 17 
+    a <- 8 
+    a <- 5.1
 
-    i <- 0
-    j <- 0
+    i <- 1
     min <- i::$a
-    sorted <- 0
+    max <- 0
+
+    run "next_greater.sq" with a, max
+    sorted <- max
 }
 expect i == #a { 
     reveal a
     reveal sorted
 }
 
-if j::$a > sorted and (min == 0 or j::$a < min) { 
-    min <- j::$a
-}
+run "next_greater.sq" with a, max
+sorted <- max
 
-if j != (#a - 1) { 
-    j <- j + 1
-} else { 
-    i <- i + 1
-    j <- 0
-    sorted <- min
-    min <- 0
-}
+i <- i + 1

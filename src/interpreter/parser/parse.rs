@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::{fs, process};
 
 use super::expr::{Expression, ExpressionType};
@@ -12,16 +13,18 @@ pub struct Parser<'a> {
     index: usize,
     prog: Program,
     stat: Statement,
+    directory: &'a PathBuf,
     prog_cache: &'a mut HashMap<String, Box<Program>>,
 }
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token>, prog_cache: &mut HashMap<String, Box<Program>>) -> Parser {
+    pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, directory: &'a PathBuf) -> Parser<'a> {
         Parser {
             current_token: tokens[0].clone(),
             tokens: tokens,
             index: 0,
             prog: Program::new(),
             stat: Statement::new(),
+            directory: directory,
             prog_cache: prog_cache,
         }
     }
@@ -393,11 +396,15 @@ impl<'a> Parser<'a> {
         let x = self.prog_cache.get(&file_name);
 
         if matches!(x, None) {
-            let buf = fs::read_to_string(&file_name).unwrap_or_else(|_| {
+            let mut new_directory = self.directory.clone();
+            PathBuf::push(&mut new_directory, &file_name);
+            let buf = fs::read_to_string(&new_directory).unwrap_or_else(|_| {
                 eprintln!("could not read file: {}", file_name);
                 process::exit(1);
             });
-            let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache);
+
+            PathBuf::pop(&mut new_directory);
+            let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache, &new_directory);
             let prog = Box::new(p.run().clone());
             self.stat.sub_program = Some(prog.clone());
             self.prog_cache.insert(file_name, prog);

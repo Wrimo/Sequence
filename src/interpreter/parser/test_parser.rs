@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
-use crate::interpreter::parser::expr::{Expression, ExpressionType};
+use crate::interpreter::{parser::expr::{Expression, ExpressionType}, test};
 
 use super::{lexer, parse::{self, Parser}, parsing_types::{self, TokenType}, statement::{Program, Statement, StatementType}};
 
@@ -16,7 +16,8 @@ fn expect_parse(s: &str, body: Vec<StatementType>) {
 
 fn run_parser(s: &str) ->  Program {
     let mut prog_cache: HashMap<String, Box<Program>> = HashMap::new();
-    let mut p = Parser::new(lexer::symbol_analysis(&s).unwrap(), &mut prog_cache);
+    let test_path: PathBuf = PathBuf::new();
+    let mut p = Parser::new(lexer::symbol_analysis(&s).unwrap(), &mut prog_cache, &test_path);
     return p.run().clone();
 }
 
