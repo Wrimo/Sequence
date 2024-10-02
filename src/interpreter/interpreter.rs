@@ -1,6 +1,9 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use super::parser::expr::{Expression, ExpressionType};
 use super::parser::statement::{Program, Statement, StatementType};
-use super::runtime_types::{History, Memory, VariableType};
+use super::runtime_types::{History, HistoryCollection, Memory, VariableType};
 use crate::interpreter::runtime_types::SharedHistory;
 use crate::user_options::USER_OPTIONS;
 
@@ -213,7 +216,7 @@ fn run_statements(
                 for var in statement.var_list.as_ref().unwrap() { 
                     shared_memory.insert_history(var.clone(), memory.get_history(var.to_string()))
                 }
-                execute_program(statement.sub_program.as_ref().unwrap(), Some(shared_memory));
+                execute_program(statement.sub_program.as_ref().unwrap(), Some(shared_memory), &None); // TODO: replace shared memory with parameters
             }
 
             _ => {
@@ -223,11 +226,23 @@ fn run_statements(
     }
 }
 
-pub fn execute_program(program: &Program, shared_memory: Option<Memory>) {
+pub fn execute_program(program: &Program, shared_memory: Option<Memory>, parameters: &Option<HistoryCollection>) {
     let mut memory = match shared_memory {
         Some(x) => x, 
         None => Memory::new(),
     };
+
+    if let Some(params) = parameters { // TODO: restructure there so there is an error if there are no parameters and some are expected 
+        let expected_names = program.parameters.clone().expect("Program received unexpected parameters");
+        if params.len() != expected_names.len() {
+            panic!("got {} parameters, expected {}", params.len(), expected_names.len());
+        }
+
+        for i in 0..expected_names.len() { 
+            let shared_history = Rc::new(RefCell::new(params[i].clone())); 
+            memory.insert_history(expected_names[i].clone(), shared_history);
+        }
+    }
 
     if USER_OPTIONS.lock().unwrap().debug { // probably should move this up so all programs are printed once, not once per run
         println!("{:?}", program.begin);

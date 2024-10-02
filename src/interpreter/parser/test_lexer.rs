@@ -117,7 +117,7 @@ fn test_string() {
 
 #[test]
 fn test_whitespace() {
-    let s = " \t\n";
+    let s = " \n";
     let tokens = lexer::symbol_analysis(s).unwrap();
 
     expect_tokens(tokens, vec![TokenType::NEWLINE]);

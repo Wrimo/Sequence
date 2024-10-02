@@ -30,6 +30,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn run(&mut self) -> &Program {
+        self.take();
         self.body();
         return &self.prog;
     }
@@ -94,6 +95,21 @@ impl<'a> Parser<'a> {
         }
         self.error_missing_token(TokenType::IDENTIFIER(String::from("")));
         None
+    }
+
+    fn take(&mut self) {
+        if self.accept(TokenType::TAKE) {
+            let mut params: Vec<String> = Vec::new();
+            loop {
+                params.push(self.expect_identifier().unwrap());
+
+                if !self.accept(TokenType::COMMA) { 
+                    break;
+                }
+            }
+            self.expect(TokenType::NEWLINE);
+            self.prog.parameters = Some(params);
+        }
     }
 
     fn body(&mut self) {

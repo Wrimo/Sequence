@@ -1,11 +1,20 @@
+take a, max
 begin {  -- sort breaks for lists with repeated values and negative numbers
     a <- 1
-    a <- 3  
+    a <- 99
+    a <- 3 
+    a <- 13
+    a <- 15
     a <- 5
     a <- 2
     a <- 17 
     a <- 8 
     a <- 5.1
+    a <- 7
+    a <- 10
+    a <- 12
+    a <- 6 
+
 
     i <- 1
     min <- i::$a

@@ -5,7 +5,6 @@ use crate::interpreter::{parser::expr::{Expression, ExpressionType}, test};
 use super::{lexer, parse::{self, Parser}, parsing_types::{self, TokenType}, statement::{Program, Statement, StatementType}};
 
 fn expect_parse(s: &str, body: Vec<StatementType>) {
-  
     let prog = run_parser(s);
 
     assert_eq!(prog.body.len(), body.len());
