@@ -13,16 +13,18 @@ pub struct Parser<'a> {
     index: usize,
     prog: Program,
     stat: Statement,
-    directory: &'a PathBuf,
+    directory: PathBuf,
     prog_cache: &'a mut HashMap<String, Box<Program>>,
 }
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, directory: &'a PathBuf) -> Parser<'a> {
+    pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, file_path: &'a PathBuf) -> Parser<'a> {
+        let mut directory = file_path.clone();
+        PathBuf::pop(&mut directory);
         Parser {
             current_token: tokens[0].clone(),
             tokens: tokens,
             index: 0,
-            prog: Program::new(),
+            prog: Program::new(String::from(file_path.to_string_lossy())),
             stat: Statement::new(),
             directory: directory,
             prog_cache: prog_cache,
@@ -419,7 +421,6 @@ impl<'a> Parser<'a> {
                 process::exit(1);
             });
 
-            PathBuf::pop(&mut new_directory);
             let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache, &new_directory);
             let prog = Box::new(p.run().clone());
             self.stat.sub_program = Some(prog.clone());

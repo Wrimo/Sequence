@@ -28,8 +28,7 @@ fn main() {
         process::exit(1);
     });
 
-    let mut path = PathBuf::from(&result.file_name);
-    PathBuf::pop(&mut path);
+    let path = PathBuf::from(&result.file_name);
 
     run_program(&buf, &path, &result.parameters);
 }

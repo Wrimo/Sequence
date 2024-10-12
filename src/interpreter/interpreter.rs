@@ -235,13 +235,16 @@ pub fn execute_program(program: &Program, shared_memory: Option<Memory>, paramet
     if let Some(params) = parameters { // TODO: restructure there so there is an error if there are no parameters and some are expected 
         let expected_names = program.parameters.clone().expect("Program received unexpected parameters");
         if params.len() != expected_names.len() {
-            panic!("got {} parameters, expected {}", params.len(), expected_names.len());
+            panic!("{}: got {} parameters, expected {}", program.name, params.len(), expected_names.len());
         }
 
         for i in 0..expected_names.len() { 
             let shared_history = Rc::new(RefCell::new(params[i].clone())); 
             memory.insert_history(expected_names[i].clone(), shared_history);
         }
+    }
+    else { 
+        panic!("{}: expected paramters, but none were given", program.name);
     }
 
     if USER_OPTIONS.lock().unwrap().debug { // probably should move this up so all programs are printed once, not once per run
