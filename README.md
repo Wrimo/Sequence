@@ -1,6 +1,3 @@
-Sequence is an intepreted language written in Rust. It was created by Brennan Cottrell as a 
-hobbyist project and is not intended for profesional development.
-
 # Looping 
 
 Every program in Sequence is treated as if was implicity wrapped in a loop. For example the following program 
@@ -13,7 +10,7 @@ expect true {
     print(1 + 1)
 }
 ``` 
-This program prints 2 and then terminates. Expect block are checked after running the body of program on each loop (including the first). If the expresion is evaluates as true, the code block is executed and then the program terminates. Running a program without an expect block will generate warning.
+This program prints 2 and then terminates. Expect block are checked on each loop (including the first) after running the body of the program. If the expresion is evaluates as true, the code block is executed and then the program terminates. Running a program without an expect block will generate warning.
 
 The `begin` executes only the first time the program executes. 
 ```
