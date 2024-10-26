@@ -31,7 +31,7 @@ a <- 3
 print(a, prev a) -- 3 2
 ```
 
-Histories can be indexed using the accessor operator `::`. The history be indexed into (the source) must be preceeded by `$`. If the history is on the left side, it counts back from the current value. If on the right side, it counts forward from index 0. 
+Histories can be indexed using the accessor operator `::`. The history be indexed into (the source) must be preceeded by `$`. If the history is on the left side, it counts back from the end of the history. If the history is on the right side, it counts forward from index 0. 
 ```
 a <- 1
 a <- 2
@@ -40,7 +40,7 @@ a <- 4
 a <- 5
 
 print($a::1) -- 4
-print(2::$a) -- 3
+print(1::$a) -- 2
 
 print(prev a == $a::1) -- true 
 print(a == $a::0) -- true
