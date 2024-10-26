@@ -1,0 +1,21 @@
+begin {
+   i <- 0
+
+   a <- 3
+   a <- 4
+   a <- 2
+
+    -- expects
+    -- a: History to search
+    -- b: History to add max to
+    -- i really need to improve how variables are shared between files
+    max <- 0
+}
+expect i == #a {
+    print(max)
+    reveal max
+}
+if i::$a > max {
+    max <- i::$a
+}
+i <- i + 1

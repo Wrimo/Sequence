@@ -1,3 +1,5 @@
+use crate::interpreter::runtime_types::History;
+
 use super::expr::Expression;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -28,17 +30,22 @@ pub struct Statement {
 
 #[derive(Clone, Debug)]
 pub struct Program {
+    pub name: String,
     pub begin: Option<Statement>,
     pub expect: Vec<Statement>,
     pub body: Vec<Statement>,
+    pub parameters: Option<Vec<String>>,
+    // TODO: add some new structure to hold taken histories
 }
 
 impl Program {
-    pub fn new() -> Program {
+    pub fn new(name: String) -> Program {
         Program {
+            name: name,
             begin: None,
             expect: Vec::new(),
             body: Vec::new(),
+            parameters: None,
         }
     }
 

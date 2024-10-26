@@ -141,10 +141,6 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         i += 1;
         tokens.push(token);
     }
-    tokens.push(Token {
-        token_type: TokenType::NEWLINE,
-        line: line_number + 1,
-    });
 
     if USER_OPTIONS.lock().unwrap().debug {
         for i in 0..tokens.len() {

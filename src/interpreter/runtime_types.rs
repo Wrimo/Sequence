@@ -65,19 +65,23 @@ impl VariableType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct History {
-    pub name: String,
     items: Vec<VariableType>,
 }
 
+pub type HistoryCollection = Vec<SharedHistory>;
 pub type SharedHistory = Rc<RefCell<History>>;
 
 impl History {
-    // alocates new history in sharable memory
-    pub fn new(name: String, val: VariableType) -> SharedHistory {
+    pub fn new() -> History { 
+        History { 
+            items: vec![],
+        }
+    }
+
+    pub fn alloc(name: String, val: VariableType) -> SharedHistory {
         Rc::new(RefCell::new(History {
-            name: name,
             items: vec![val],
         }))
     }
@@ -111,7 +115,7 @@ impl Memory {
         self.cells
             .entry(name.clone())
             .and_modify(|ent| (**ent).borrow_mut().add(value.clone()) )// (*ent).borrow_mut().add(value.clone()))
-            .or_insert(History::new(name, value));
+            .or_insert(History::alloc(name, value));
     }
  
     pub fn insert_history(&mut self, name: String, history: Rc<RefCell<History>>) {

@@ -1,5 +1,5 @@
 pub mod executor;
-mod runtime_types;
-mod parser;
+pub mod runtime_types;
+pub mod parser;
 mod interpreter;
 mod test; 

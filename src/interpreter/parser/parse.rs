@@ -13,16 +13,25 @@ pub struct Parser<'a> {
     index: usize,
     prog: Program,
     stat: Statement,
-    directory: &'a PathBuf,
+    directory: PathBuf,
     prog_cache: &'a mut HashMap<String, Box<Program>>,
 }
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, directory: &'a PathBuf) -> Parser<'a> {
+    pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, file_path: &'a PathBuf) -> Parser<'a> {
+        let mut directory = file_path.clone();
+        let mut tokens = tokens.clone(); // TODO: don't make the parse require a newline at the end
+        tokens.push(Token {
+            token_type: TokenType::NEWLINE,
+            line: 99999,
+        });
+
+
+        PathBuf::pop(&mut directory);
         Parser {
             current_token: tokens[0].clone(),
             tokens: tokens,
             index: 0,
-            prog: Program::new(),
+            prog: Program::new(String::from(file_path.to_string_lossy())),
             stat: Statement::new(),
             directory: directory,
             prog_cache: prog_cache,
@@ -30,6 +39,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn run(&mut self) -> &Program {
+        self.take();
         self.body();
         return &self.prog;
     }
@@ -94,6 +104,21 @@ impl<'a> Parser<'a> {
         }
         self.error_missing_token(TokenType::IDENTIFIER(String::from("")));
         None
+    }
+
+    fn take(&mut self) {
+        if self.accept(TokenType::TAKE) {
+            let mut params: Vec<String> = Vec::new();
+            loop {
+                params.push(self.expect_identifier().unwrap());
+
+                if !self.accept(TokenType::COMMA) { 
+                    break;
+                }
+            }
+            self.expect(TokenType::NEWLINE);
+            self.prog.parameters = Some(params);
+        }
     }
 
     fn body(&mut self) {
@@ -402,8 +427,7 @@ impl<'a> Parser<'a> {
                 eprintln!("could not read file: {}", file_name);
                 process::exit(1);
             });
-
-            PathBuf::pop(&mut new_directory);
+            
             let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache, &new_directory);
             let prog = Box::new(p.run().clone());
             self.stat.sub_program = Some(prog.clone());
