@@ -1,5 +1,10 @@
+use std::any::Any;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::{env, fs, process};
-use crate::interpreter::runtime_types::{History, HistoryCollection, VariableType};
+use crate::interpreter::runtime_types::{History, HistoryCollection, SharedHistory, VariableType};
+use crate::interpreter::parser::parsing_types::{Token, TokenType};
+use crate::interpreter::parser::lexer::symbol_analysis;
 use crate::user_options::USER_OPTIONS;
 
 pub struct ArgResult {
@@ -44,26 +49,36 @@ fn get_parameters(args: &Vec<String>, index: usize) -> Option<HistoryCollection>
 
     let mut histories: HistoryCollection = HistoryCollection::new();
     for i in index..args.len() {
-        let mut history: History = History::new(); 
-        let value: VariableType;
 
-        if let Ok(x) = args[i].parse::<f64>() { 
-            value = VariableType::FLOAT(x);
-        }
-        else if let Ok(x) = args[i].parse::<i64>() {
-            value = VariableType::INTEGER(x);
-        } 
-        else {
-            eprintln!("invalid parameter");
-            panic!();
-        }
-
-        history.add(value);
+        let tokens: Option<Vec<Token>>= symbol_analysis(args[i].as_str());
+        let history = parse_history(tokens.unwrap());
+        
         histories.push(history);
     }
 
     return Some(histories);
 }
+
+// history syntax 
+// {1, 2, 3, 4, 10}
+fn parse_history(tokens: Vec<Token>) -> SharedHistory { 
+    let mut history = History::new();
+
+    assert!(tokens[0].token_type == TokenType::LBRACKET);
+
+    for i in (1..tokens.len()).step_by(2) { 
+        match tokens[i].token_type {
+            TokenType::FLOAT(x) => history.add(VariableType::FLOAT(x)),
+            TokenType::INTEGER(x) => history.add(VariableType::INTEGER(x)),
+            _ => panic!("bad token in parameter {:?}", tokens[i].token_type),
+        };
+
+        assert!(tokens[i+1].token_type == TokenType::COMMA || tokens[i+1].token_type == TokenType::RBRACKET);
+    }
+    assert!(tokens[tokens.len()-1].token_type == TokenType::RBRACKET);
+    return Rc::new(RefCell::new(history));
+}
+
 
 fn usage(progname: &String) {
     eprintln!("Usage:");

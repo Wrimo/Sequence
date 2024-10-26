@@ -70,7 +70,7 @@ pub struct History {
     items: Vec<VariableType>,
 }
 
-pub type HistoryCollection = Vec<History>;
+pub type HistoryCollection = Vec<SharedHistory>;
 pub type SharedHistory = Rc<RefCell<History>>;
 
 impl History {

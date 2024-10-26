@@ -1,3 +1,4 @@
+take a, max
 begin { -- expects a histories named a and max
     i <- 0
     current <- 9999999 -- think adding inf/ninf would be useful

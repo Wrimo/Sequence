@@ -1,7 +1,4 @@
-take a, max
 begin {  -- sort breaks for lists with repeated values and negative numbers
-    a <- 1
-    a <- 99
     a <- 3 
     a <- 13
     a <- 15

@@ -8,7 +8,7 @@ use super::runtime_types::HistoryCollection;
 // this manages storing programs that correspond to specific files 
 // so they do have to be reevaluated each time the file is run
 
-pub fn run_program(input: &str, directory: &PathBuf, parameters: &Option<HistoryCollection>) {
+pub fn run_program(input: &str, directory: &PathBuf, parameters: Option<HistoryCollection>) {
     let tokens = parser::lexer::symbol_analysis(input).unwrap(); // better errors later
     let mut prog_cache: HashMap<String, Box<Program>> = HashMap::new(); 
 

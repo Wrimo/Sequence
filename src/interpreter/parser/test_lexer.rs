@@ -2,11 +2,10 @@ use super::{lexer, parse, parsing_types, parsing_types::TokenType};
 
 fn expect_tokens(tokens: Vec<parsing_types::Token>, expected: Vec<parsing_types::TokenType>) {
     let len = tokens.len();
-    assert_eq!(len - 1, expected.len());
+    assert_eq!(len, expected.len());
     for i in 0..len - 1 {
         assert_eq!(tokens[i].token_type, expected[i]);
     }
-    assert_eq!(tokens[len - 1].token_type, TokenType::NEWLINE);
 }
 
 #[test]

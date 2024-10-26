@@ -19,6 +19,13 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, file_path: &'a PathBuf) -> Parser<'a> {
         let mut directory = file_path.clone();
+        let mut tokens = tokens.clone(); // TODO: don't make the parse require a newline at the end
+        tokens.push(Token {
+            token_type: TokenType::NEWLINE,
+            line: 99999,
+        });
+
+
         PathBuf::pop(&mut directory);
         Parser {
             current_token: tokens[0].clone(),
@@ -420,7 +427,7 @@ impl<'a> Parser<'a> {
                 eprintln!("could not read file: {}", file_name);
                 process::exit(1);
             });
-
+            
             let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache, &new_directory);
             let prog = Box::new(p.run().clone());
             self.stat.sub_program = Some(prog.clone());

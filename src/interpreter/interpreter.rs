@@ -1,5 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::str::Matches;
+use std::thread::current;
 
 use super::parser::expr::{Expression, ExpressionType};
 use super::parser::statement::{Program, Statement, StatementType};
@@ -156,7 +158,7 @@ fn run_statements(
             println!("{:?}", statement.statement_type.clone());
         }
 
-        match statement.statement_type.clone() {
+        match statement.statement_type.clone() { // TODO: split statement execution into different function
             StatementType::ASSIGN => {
                 let val = calculate_expression(statement.expr.clone().unwrap(), memory);
                 let name: String = statement.var_name.clone().unwrap();
@@ -212,11 +214,25 @@ fn run_statements(
             }
 
             StatementType::RUN => {
-                let mut shared_memory: Memory = Memory::new(); 
-                for var in statement.var_list.as_ref().unwrap() { 
-                    shared_memory.insert_history(var.clone(), memory.get_history(var.to_string()))
+                // for each variable insert a shared insert history with that name in current memory 
+                
+                let sub_prog: Box<Program> = statement.sub_program.as_ref().unwrap().clone();
+                let mut parameters: Option<HistoryCollection> = None;
+
+                if let Some(parameter_names) = sub_prog.parameters {
+                    let given_histories = statement.var_list.as_ref().unwrap();
+                    let mut new_parameters: HistoryCollection = HistoryCollection::new();
+                    assert_eq!(given_histories.len(), parameter_names.len());
+
+                    for (current_name, expected_name) in given_histories.iter().zip(parameter_names.iter()) {
+                        let mut hist: Rc<RefCell<History>> = memory.get_history(current_name.clone());
+                        new_parameters.push(hist.clone());
+                    }
+
+                    parameters = Some(new_parameters);
                 }
-                execute_program(statement.sub_program.as_ref().unwrap(), Some(shared_memory), &None); // TODO: replace shared memory with parameters
+
+                execute_program(statement.sub_program.as_ref().unwrap(), None, parameters); // TODO: replace shared memory with parameters
             }
 
             _ => {
@@ -226,25 +242,26 @@ fn run_statements(
     }
 }
 
-pub fn execute_program(program: &Program, shared_memory: Option<Memory>, parameters: &Option<HistoryCollection>) {
+pub fn execute_program(program: &Program, shared_memory: Option<Memory>, parameters: Option<HistoryCollection>) {
     let mut memory = match shared_memory {
         Some(x) => x, 
         None => Memory::new(),
     };
 
-    if let Some(params) = parameters { // TODO: restructure there so there is an error if there are no parameters and some are expected 
+    // todo - should clean up this function, especially move parmeter logic to another function
+    if let Some(params) = parameters {
         let expected_names = program.parameters.clone().expect("Program received unexpected parameters");
         if params.len() != expected_names.len() {
             panic!("{}: got {} parameters, expected {}", program.name, params.len(), expected_names.len());
         }
 
         for i in 0..expected_names.len() { 
-            let shared_history = Rc::new(RefCell::new(params[i].clone())); 
+            let shared_history = params[i].clone(); 
             memory.insert_history(expected_names[i].clone(), shared_history);
         }
     }
-    else { 
-        panic!("{}: expected paramters, but none were given", program.name);
+    else if matches!(program.parameters, Some(_)) { 
+        panic!("{}: expected parameters, but none were given", program.name)
     }
 
     if USER_OPTIONS.lock().unwrap().debug { // probably should move this up so all programs are printed once, not once per run
