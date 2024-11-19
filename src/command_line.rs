@@ -67,9 +67,11 @@ fn parse_history(tokens: Vec<Token>) -> SharedHistory {
     assert!(tokens[0].token_type == TokenType::LBRACKET);
 
     for i in (1..tokens.len()).step_by(2) { 
-        match tokens[i].token_type {
-            TokenType::FLOAT(x) => history.add(VariableType::FLOAT(x)),
-            TokenType::INTEGER(x) => history.add(VariableType::INTEGER(x)),
+        match &tokens[i].token_type {
+            TokenType::FLOAT(x) => history.add(VariableType::FLOAT(*x)),
+            TokenType::INTEGER(x) => history.add(VariableType::INTEGER(*x)),
+            TokenType::STRING(x) => history.add(VariableType::STRING(x.clone())),
+
             _ => panic!("bad token in parameter {:?}", tokens[i].token_type),
         };
 

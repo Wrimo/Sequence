@@ -90,3 +90,36 @@ reveal a -- 1 2 3
 Sequence suppots standard arithmetic, multiplication, and comparative operators. Logical operators are `and`, `or`, and `not`. 
 
 Sequence also supports absolute value as `|` as in `|(x - b)`, factorial with `!4` and exponent with `^`.  
+
+# Ideas
+
+```
+-- types 
+a: num <- 12
+b: char <- 'c'
+c: bool <- true
+
+-- strings are just char typed histories 
+
+a <- "hello" 
+
+-- is just special syntax for 
+a <- 'h'
+a <- 'e'
+a <- 'l'
+a <- 'l'
+a <- 'o'
+
+-- introduce collections of histories
+-- books? better name
+
+col: book <- a
+col <- b
+col <- c 
+
+reveal col 
+-- [12]
+-- ['c']
+-- true
+
+```

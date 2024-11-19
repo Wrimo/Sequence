@@ -1,0 +1,4 @@
+take a
+expect true { 
+    reveal a
+}

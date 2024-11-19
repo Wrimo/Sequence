@@ -103,6 +103,7 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::INTEGER(x) => VariableType::INTEGER(x),
         ExpressionType::FLOAT(x) => VariableType::FLOAT(x),
         ExpressionType::BOOL(x) => VariableType::BOOL(x),
+        ExpressionType::STRING(x) => VariableType::STRING(x),
 
         ExpressionType::IDENTIFIER(s) => {
             let history: SharedHistory = memory.get_history(s);
@@ -224,8 +225,8 @@ fn run_statements(
                     let mut new_parameters: HistoryCollection = HistoryCollection::new();
                     assert_eq!(given_histories.len(), parameter_names.len());
 
-                    for (current_name, expected_name) in given_histories.iter().zip(parameter_names.iter()) {
-                        let mut hist: Rc<RefCell<History>> = memory.get_history(current_name.clone());
+                    for (current_name, _) in given_histories.iter().zip(parameter_names.iter()) {
+                        let hist: Rc<RefCell<History>> = memory.get_history(current_name.clone());
                         new_parameters.push(hist.clone());
                     }
 

@@ -16,6 +16,7 @@ pub struct Parser<'a> {
     directory: PathBuf,
     prog_cache: &'a mut HashMap<String, Box<Program>>,
 }
+
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, file_path: &'a PathBuf) -> Parser<'a> {
         let mut directory = file_path.clone();
@@ -298,6 +299,7 @@ impl<'a> Parser<'a> {
             TokenType::FLOAT(x) => Expression::new(ExpressionType::FLOAT(x), None, None),
             TokenType::TRUE => Expression::new(ExpressionType::BOOL(true), None, None),
             TokenType::FALSE => Expression::new(ExpressionType::BOOL(false), None, None),
+            TokenType::STRING(x) => Expression::new(ExpressionType::STRING(x), None, None),
 
             TokenType::LPAREN => {
                 let exp = self.expr();
