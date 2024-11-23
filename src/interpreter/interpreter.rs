@@ -4,7 +4,7 @@ use std::str::Matches;
 use std::thread::current;
 
 use super::parser::expr::{Expression, ExpressionType};
-use super::parser::statement::{Program, Statement, StatementType};
+use super::parser::statement::{self, Program, Statement, StatementType};
 use super::runtime_types::{History, HistoryCollection, Memory, VariableType};
 use crate::interpreter::runtime_types::SharedHistory;
 use crate::user_options::USER_OPTIONS;
@@ -110,17 +110,21 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
             let borrow = history.borrow();
             borrow.get_past(borrow.len() - 1).clone()
         }
-        ExpressionType::PREV(s) => {
-            let var_history: SharedHistory = memory.get_history(s);
-            let borrow = var_history.borrow();
-            if borrow.len() == 1 {
-                return borrow.get_past(0).clone();
+        ExpressionType::PREV => {
+            let value: VariableType = calculate_expression(lhs.unwrap(), memory);
+
+            if let VariableType::History(history) = value {
+                let borrow = history.borrow();
+                if borrow.len() == 1 {
+                    return borrow.get_past(0).clone();
+                }
+                return borrow.get_past(borrow.len() - 2).clone();
             }
-            borrow.get_past(borrow.len() - 2).clone()
+            panic!("Tried to get previous value of expression that is not a History")
         }
         ExpressionType::ACCESSOR => {
             let name = expr.var_name.unwrap();
-            let var_history: History = memory.get_history(name).borrow().clone();
+            let var_history: History = memory.get_history(name).borrow().clone(); // todo - want to avoid this type of copy
 
             if !matches!(lhs, None) {
                 // could clean this up with a simpler way to get values out of VariableType
@@ -135,18 +139,40 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
             return VariableType::INTEGER(0);
         }
 
+        ExpressionType::SUBHISTORY(name) => {
+            let history: SharedHistory = memory.get_history(name);
+            let value: VariableType = history.borrow().get_past(history.borrow().len() - 1).clone();
+            match &value {
+                VariableType::History(_x) => value, 
+                _ => panic!("Tried to get a sub History on an expression that is not of type History")
+            }
+        }
+
         ExpressionType::LEN(s) => VariableType::INTEGER(memory.get_history(s).borrow().len() as i64),
 
         _ => VariableType::INTEGER(-1), // should do something else here!
     }
 }
 
-fn print_variable(x: &VariableType) {
+fn get_printable_history(x: SharedHistory) -> String  {
+    // todo - would be better to each value
+    // and then a do a join(',') and print that 
+    let mut values: Vec<String> = Vec::new();
+    for i in 0..x.borrow().len() {
+        values.push(get_printable_value(&x.borrow().get_past(i)));
+    }
+
+    let value_text = values.join(", ");
+    return format!("[{}]", value_text);
+}
+
+fn get_printable_value(x: &VariableType) -> String {
     match x {
-        VariableType::BOOL(x) => print!("{} ", x),
-        VariableType::INTEGER(x) => print!("{} ", x),
-        VariableType::FLOAT(x) => print!("{} ", x),
-        VariableType::STRING(x) => print!("{} ", x),
+        VariableType::BOOL(x) => format!("{}", x),
+        VariableType::INTEGER(x) => format!("{}", x),
+        VariableType::FLOAT(x) => format!("{}", x),
+        VariableType::STRING(x) => format!("{}", x),
+        VariableType::History(x) => get_printable_history(x.clone()),
     }
 }
 
@@ -180,12 +206,14 @@ fn run_statements(
                     println!("");
                     continue;
                 }
-                let x = calculate_expression(statement.expr.clone().unwrap(), memory);
-                print_variable(&x);
 
-                for i in 0..statement.alt_exps.len() {
+                // todo - could get rid of this is if i moved the first expr to the same list as the others
+                let x = calculate_expression(statement.expr.clone().unwrap(), memory);
+                println!("{}", get_printable_value(&x));
+
+                for i in 0..statement.alt_exps.len() { 
                     let x = calculate_expression(statement.alt_exps[i].clone(), memory);
-                    print_variable(&x);
+                    println!("{}", get_printable_value(&x));
                 }
                 println!("");
             }
@@ -208,9 +236,7 @@ fn run_statements(
 
                 let var_history: SharedHistory = memory.get_history(statement.var_name.clone().unwrap());
                 print!("{}: ", statement.var_name.clone().unwrap());
-                for i in 0..var_history.borrow().len() {
-                    print_variable(&var_history.borrow().get_past(i));
-                }
+                print!("{}", get_printable_history(var_history));
                 println!();
             }
 

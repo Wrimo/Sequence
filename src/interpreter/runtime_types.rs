@@ -8,6 +8,7 @@ pub enum VariableType {
     INTEGER(i64),
     BOOL(bool),
     STRING(String),
+    History(SharedHistory),
 }
 
 impl VariableType {
@@ -17,6 +18,7 @@ impl VariableType {
             Self::INTEGER(x) => *x >= 1,
             Self::BOOL(x) => *x,
             Self::STRING(x) => *x != "".to_string(),
+            Self::History(x) => x.borrow_mut().items.len() != 0, 
         }
     }
 
@@ -37,8 +39,9 @@ impl VariableType {
         match self {
             Self::BOOL(x) => *self = Self::INTEGER(*x as i64),
             Self::FLOAT(x) => *self = Self::INTEGER(*x as i64),
-            Self::STRING(_x) => *self = Self::INTEGER(0), // neeed to change later
-            Self::INTEGER(_x) => {}
+            Self::INTEGER(_x) => {},
+            Self::STRING(_x) =>  panic!("Tried to convert String to int"),
+            Self::History(_x) => panic!("Tried to convert History to int"),
         }
         self.clone()
     }
@@ -65,7 +68,7 @@ impl VariableType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct History {
     items: Vec<VariableType>,
 }

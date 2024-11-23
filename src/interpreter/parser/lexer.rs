@@ -18,6 +18,8 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         (")", TokenType::RPAREN),
         ("{", TokenType::LBRACKET),
         ("}", TokenType::RBRACKET),
+        ("[", TokenType::RSQUAREBRACKET),
+        ("]", TokenType::LSQUAREBRACKET),
         ("+", TokenType::ADDOP),
         ("-", TokenType::SUBOP),
         ("*", TokenType::MULOP),

@@ -251,8 +251,13 @@ impl<'a> Parser<'a> {
         } else if self.accept(TokenType::VERTICALBAR) {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
         } else if self.accept(TokenType::PREV) {
-            return Expression::new(ExpressionType::PREV(self.expect_identifier().unwrap()), None, None);
-        } else if self.accept(TokenType::LEN) {
+            return Expression::new(ExpressionType::PREV, Some(self.expr()), None);
+        } else if self.accept(TokenType::RSQUAREBRACKET) {
+            let name = self.expect_identifier().unwrap();
+            self.expect(TokenType::LSQUAREBRACKET);
+            return Expression::new(ExpressionType::SUBHISTORY(name), None, None);
+        }
+        else if self.accept(TokenType::LEN) {
             let name: Option<String> = self.expect_identifier();
             return Expression::new(ExpressionType::LEN(name.unwrap()), None, None);
         }
@@ -268,8 +273,9 @@ impl<'a> Parser<'a> {
         } else {
             lhs = Some(self.factor());
         }
-        while self.accept(TokenType::ACCESSOR) {
-            if self.accept(TokenType::DOLLAR) {
+
+        while self.accept(TokenType::ACCESSOR) { 
+            if self.accept(TokenType::DOLLAR) { // todo - remove dollar sign syntax and instead just treat negatives as backwards
                 if !matches!(ident.clone(), None) {
                     self.error_custom("multiple histories marked as source");
                 }
