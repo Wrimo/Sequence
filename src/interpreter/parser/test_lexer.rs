@@ -1,4 +1,4 @@
-use super::{lexer, parse, parsing_types, parsing_types::TokenType};
+use super::{parsing_types};
 
 fn expect_tokens(tokens: Vec<parsing_types::Token>, expected: Vec<parsing_types::TokenType>) {
     let len = tokens.len();

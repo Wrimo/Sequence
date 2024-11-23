@@ -1,7 +1,7 @@
-use std::any::Any;
+
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::{env, fs, process};
+use std::{process};
 use crate::interpreter::runtime_types::{History, HistoryCollection, SharedHistory, VariableType};
 use crate::interpreter::parser::parsing_types::{Token, TokenType};
 use crate::interpreter::parser::lexer::symbol_analysis;

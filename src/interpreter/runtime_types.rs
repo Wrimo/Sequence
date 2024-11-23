@@ -80,7 +80,7 @@ impl History {
         }
     }
 
-    pub fn alloc(name: String, val: VariableType) -> SharedHistory {
+    pub fn alloc(_name: String, val: VariableType) -> SharedHistory {
         Rc::new(RefCell::new(History {
             items: vec![val],
         }))

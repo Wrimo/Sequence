@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::str::Matches;
-use std::thread::current;
+
+
 
 use super::parser::expr::{Expression, ExpressionType};
 use super::parser::statement::{Program, Statement, StatementType};
@@ -224,8 +224,8 @@ fn run_statements(
                     let mut new_parameters: HistoryCollection = HistoryCollection::new();
                     assert_eq!(given_histories.len(), parameter_names.len());
 
-                    for (current_name, expected_name) in given_histories.iter().zip(parameter_names.iter()) {
-                        let mut hist: Rc<RefCell<History>> = memory.get_history(current_name.clone());
+                    for (current_name, _expected_name) in given_histories.iter().zip(parameter_names.iter()) {
+                        let hist: Rc<RefCell<History>> = memory.get_history(current_name.clone());
                         new_parameters.push(hist.clone());
                     }
 
