@@ -153,10 +153,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         _ => VariableType::INTEGER(-1), // should do something else here!
     }
 }
-
+    
 fn get_printable_history(x: SharedHistory) -> String  {
-    // todo - would be better to each value
-    // and then a do a join(',') and print that 
     let mut values: Vec<String> = Vec::new();
     for i in 0..x.borrow().len() {
         values.push(get_printable_value(&x.borrow().get_past(i)));
