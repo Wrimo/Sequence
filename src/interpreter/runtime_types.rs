@@ -22,13 +22,13 @@ impl VariableType {
         }
     }
 
-    pub fn bool_to_number(&mut self) -> Self {
+    pub fn to_num(&self) -> VariableType {
         // if is a bool, converts it to an integer for expression eval
         match self {
-            Self::BOOL(x) => *self = Self::INTEGER(if *x { 1 } else { 0 }),
-            _ => {}
+            Self::BOOL(x) => Self::INTEGER(if *x { 1 } else { 0 }),
+            Self::History(x) => x.borrow().get_past(0).clone(),
+            _ => self.clone(),
         }
-        self.clone()
     }
 
     pub fn negate(&self) -> Self {
@@ -47,7 +47,7 @@ impl VariableType {
     }
 
     pub fn abs(&mut self) -> Self {
-        self.bool_to_number();
+        self.to_num();
         match self {
             VariableType::FLOAT(x) => {
                 if *x < 0.0 {

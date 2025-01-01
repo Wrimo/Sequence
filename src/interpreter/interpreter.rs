@@ -11,7 +11,7 @@ use crate::user_options::USER_OPTIONS;
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x.unwrap(), $memory).bool_to_number(), &calculate_expression($y.unwrap(), $memory).bool_to_number()) {
+        match (&calculate_expression($x.unwrap(), $memory).to_num(), &calculate_expression($y.unwrap(), $memory).to_num()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::INTEGER((*x $op *y) as i64),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT((*x $op *y)  as f64),
             (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(*x $op (*y as f64) as f64),
@@ -27,7 +27,7 @@ macro_rules! perform_arth_op {
 
 macro_rules! perform_comp_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x.unwrap(), $memory).bool_to_number(), &calculate_expression($y.unwrap(), $memory).bool_to_number()) {
+        match (&calculate_expression($x.unwrap(), $memory).to_num(), &calculate_expression($y.unwrap(), $memory).to_num()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op (*y as f64)),
@@ -83,8 +83,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         }
 
         ExpressionType::EXPONENT => {
-            let x = calculate_expression(lhs.unwrap(), memory).bool_to_number();
-            let y = calculate_expression(rhs.unwrap(), memory).bool_to_number();
+            let x = calculate_expression(lhs.unwrap(), memory).to_num();
+            let y = calculate_expression(rhs.unwrap(), memory).to_num();
 
             match (x, y) {
                 (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT(f64::powf(x, y)),
@@ -105,11 +105,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::BOOL(x) => VariableType::BOOL(x),
         ExpressionType::STRING(x) => VariableType::STRING(x),
 
-        ExpressionType::IDENTIFIER(s) => {
-            let history: SharedHistory = memory.get_history(s);
-            let borrow = history.borrow();
-            borrow.get_past(borrow.len() - 1).clone()
-        }
+        ExpressionType::IDENTIFIER(s) => VariableType::History(memory.get_history(s)),
+
         ExpressionType::PREV => {
             let value: VariableType = calculate_expression(lhs.unwrap(), memory);
 
@@ -147,10 +144,13 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
                 _ => panic!("Tried to get a sub History on an expression that is not of type History")
             }
         }
+        // ExpressionType::ALL => {
+
+        // }
 
         ExpressionType::LEN(s) => VariableType::INTEGER(memory.get_history(s).borrow().len() as i64),
 
-        _ => VariableType::INTEGER(-1), // should do something else here!
+        _ => VariableType::INTEGER(-1), // todo - should do something else here!
     }
 }
     

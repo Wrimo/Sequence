@@ -19,6 +19,7 @@ pub enum ExpressionType {
     EXPONENT,
     UMIN, 
     ABS,
+    ALL,
     PREV, // todo - this will need to be able to take an expression that evals to a history
     ACCESSOR,     // this too
     SUBHISTORY(String),

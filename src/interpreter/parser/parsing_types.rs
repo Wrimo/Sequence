@@ -54,6 +54,7 @@ pub enum TokenType {
     QUOTE,
     WITH,
     TAKE,
+    ALL,
 }
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -69,7 +70,7 @@ pub struct CYKEntry {
     pub token: Token,
 }
 
-impl FromStr for TokenType {
+impl FromStr for TokenType { // todo - i bet i could write a macro for this
     type Err = ();
     fn from_str(input: &str) -> Result<TokenType, Self::Err> {
         match input {
@@ -121,6 +122,7 @@ impl FromStr for TokenType {
             "RUN" => Ok(TokenType::RUN),
             "WITH" => Ok(TokenType::WITH),
             "TAKE" => Ok(TokenType::TAKE),
+            "ALL" => Ok(TokenType::ALL),
             _ => return Err(()),
         }
     }

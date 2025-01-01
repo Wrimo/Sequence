@@ -252,12 +252,14 @@ impl<'a> Parser<'a> {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
         } else if self.accept(TokenType::PREV) {
             return Expression::new(ExpressionType::PREV, Some(self.expr()), None);
+        } else if self.accept(TokenType::ALL) {
+            let name = self.expect_identifier().unwrap();
+            return Expression::new(ExpressionType::ALL, Some(self.expr()), None);
         } else if self.accept(TokenType::RSQUAREBRACKET) {
             let name = self.expect_identifier().unwrap();
             self.expect(TokenType::LSQUAREBRACKET);
             return Expression::new(ExpressionType::SUBHISTORY(name), None, None);
-        }
-        else if self.accept(TokenType::LEN) {
+        } else if self.accept(TokenType::LEN) {
             let name: Option<String> = self.expect_identifier();
             return Expression::new(ExpressionType::LEN(name.unwrap()), None, None);
         }

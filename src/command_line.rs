@@ -84,7 +84,7 @@ fn parse_history(tokens: Vec<Token>) -> SharedHistory {
 
 fn usage(progname: &String) {
     eprintln!("Usage:");
-    eprintln!("  {progname} [-d] <source> [parameters]6");
+    eprintln!("  {progname} [-d] <source> [parameters]");
     eprintln!("  -d: debug print");
     process::exit(1);
 }
