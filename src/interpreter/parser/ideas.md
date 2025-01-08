@@ -41,4 +41,6 @@ reaval b
 
 ```
 
-so the left hand of the assignment need to be an expression too, 
+so the left hand of the assignment need to be an expression too
+
+should make a special history expression 

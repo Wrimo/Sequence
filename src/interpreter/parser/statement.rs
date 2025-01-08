@@ -1,6 +1,6 @@
 
 
-use super::expr::Expression;
+use super::expr::{Expression, HistoryExpression};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum StatementType {
@@ -22,7 +22,8 @@ pub struct Statement {
     pub alt_var_name: Option<String>,
     pub var_list: Option<Vec<String>>,
     pub code_block: Option<Vec<Statement>>,
-    pub expr: Option<Box<Expression>>,
+    pub expr: Option<Box<Expression>>, // could make this interface for the different expression types
+    pub history_expr: Option<Box<HistoryExpression>>,
     pub alt_code_blocks: Vec<Vec<Statement>>,
     pub alt_exps: Vec<Box<Expression>>,
     pub sub_program: Option<Box<Program>>,
@@ -63,6 +64,7 @@ impl Statement {
             var_list: None,
             code_block: None,
             expr: None,
+            history_expr: None,
             alt_code_blocks: Vec::new(),
             alt_exps: Vec::new(),
             sub_program: None,

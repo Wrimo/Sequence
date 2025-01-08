@@ -1,3 +1,5 @@
+use crate::{interpreter::runtime_types::History, user_options::Options};
+
 #[derive(Clone, Debug)]
 
 pub enum ExpressionType {
@@ -19,10 +21,6 @@ pub enum ExpressionType {
     EXPONENT,
     UMIN, 
     ABS,
-    PREV(String), // todo - this will need to be able to take an expression that evals to a history
-    ALL(String),
-    ACCESSOR,     // this too
-    SUBHISTORY(String),
     IDENTIFIER(String),
     BOOL(bool),
     INTEGER(i64),
@@ -58,5 +56,31 @@ impl PartialEq for ExpressionType {
 
     fn ne(&self, other: &Self) -> bool {
         std::mem::discriminant(self) != std::mem::discriminant(other)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum HistoryExpressionType {
+    PREV,
+    ALL(usize),
+    ACCESSOR,
+    SUBHISTORY(String),
+    IDENTIFIER(String)
+}
+
+#[derive(Clone, Debug)]
+pub struct HistoryExpression {
+    pub exp_type: HistoryExpressionType,
+    pub lhs: Option<Box<HistoryExpression>>,
+    pub rhs: Option<Box<HistoryExpression>>,
+}
+
+impl HistoryExpression {
+    pub fn new(exp_type: HistoryExpressionType, lhs: Option<Box<HistoryExpression>>, rhs: Option<Box<HistoryExpression>>) -> Box<HistoryExpression> {
+        Box::new(HistoryExpression { 
+            exp_type: exp_type, 
+            lhs: lhs, 
+            rhs: rhs, 
+        })
     }
 }

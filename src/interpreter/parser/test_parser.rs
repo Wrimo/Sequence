@@ -2,6 +2,8 @@ use std::{collections::HashMap, path::PathBuf};
 
 
 
+use crate::interpreter::parser::expr::{Expression, ExpressionType};
+
 use super::{lexer, parse::{Parser}, statement::{Program, StatementType}};
 
 fn expect_parse(s: &str, body: Vec<StatementType>) {

@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{fs, process};
 
-use super::expr::{Expression, ExpressionType};
+use crate::interpreter::runtime_types::History;
+
+use super::expr::{Expression, ExpressionType, HistoryExpression, HistoryExpressionType};
 use super::lexer::symbol_analysis;
 use super::parsing_types::{Token, TokenType};
 use super::statement::{Program, Statement, StatementType};
@@ -45,7 +47,7 @@ impl<'a> Parser<'a> {
         return &self.prog;
     }
 
-    fn error_missing_token(&self, t: TokenType) {
+    fn error_missing_token(&self, t: TokenType) { // TODO: i should make a more general fail function here that can be called by the switch statements 
         eprintln!(
             "line {}: expected {:?} got {:?}",
             self.current_token.line + 1,
@@ -158,6 +160,37 @@ impl<'a> Parser<'a> {
         return code_block;
     }
 
+    fn explicit_history_expr(&mut self) -> Box<HistoryExpression> {
+        self.expect(TokenType::LBRACKET);
+        let expr = self.history_expr();
+        self.expect(TokenType::RBRACKET);
+        return expr;
+    }
+
+    fn history_expr(&mut self) -> Box<HistoryExpression> {
+            
+            if self.accept(TokenType::PREV) {
+                return  HistoryExpression::new(HistoryExpressionType::PREV, Some(self.history_expr_fact()), None)
+            }
+            
+            return self.history_expr_fact();
+    }
+    
+
+    fn history_expr_fact(&mut self) -> Box<HistoryExpression> {
+        match self.next_token().token_type { 
+            TokenType::IDENTIFIER(s) => HistoryExpression::new(HistoryExpressionType::IDENTIFIER(s), None, None),
+
+            TokenType::LPAREN => {
+                let exp = self.history_expr();
+                self.expect(TokenType::RPAREN);
+                return exp;
+            }
+
+            _ => panic!("bad tokensss"),
+        }
+    }
+
     fn expr(&mut self) -> Box<Expression> {
         let mut lhs = self.expr_comp();
         while self.current_token.equals(TokenType::AND) || self.current_token.equals(TokenType::OR) {
@@ -250,17 +283,7 @@ impl<'a> Parser<'a> {
             return Expression::new(ExpressionType::UMIN, Some(self.factor()), None);
         } else if self.accept(TokenType::VERTICALBAR) {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
-        } else if self.accept(TokenType::PREV) {
-            return Expression::new(ExpressionType::PREV(self.expect_identifier().unwrap()), None, None);
-        } else if self.accept(TokenType::ALL) { 
-            return Expression::new(ExpressionType::ALL(self.expect_identifier().unwrap()), None, None);
-        }
-        else if self.accept(TokenType::RSQUAREBRACKET) {
-            let name = self.expect_identifier().unwrap();
-            self.expect(TokenType::LSQUAREBRACKET);
-            return Expression::new(ExpressionType::SUBHISTORY(name), None, None);
-        }
-        else if self.accept(TokenType::LEN) {
+        } else if self.accept(TokenType::LEN) {
             let name: Option<String> = self.expect_identifier();
             return Expression::new(ExpressionType::LEN(name.unwrap()), None, None);
         }
@@ -277,27 +300,6 @@ impl<'a> Parser<'a> {
             lhs = Some(self.factor());
         }
 
-        while self.accept(TokenType::ACCESSOR) { 
-            if self.accept(TokenType::DOLLAR) { // todo - remove dollar sign syntax and instead just treat negatives as backwards
-                if !matches!(ident.clone(), None) {
-                    self.error_custom("multiple histories marked as source");
-                }
-                ident = self.expect_identifier();
-            } else {
-                rhs = Some(self.factor());
-            }
-
-            if matches!(ident, None) {
-                self.error_custom("one side of must be marked an identifier marked as source ($a::1, i::$a, etc)");
-            }
-            let expr = Expression {
-                exp_type: ExpressionType::ACCESSOR,
-                lhs: lhs,
-                rhs: rhs.clone(),
-                var_name: ident.clone(),
-            };
-            lhs = Some(Box::new(expr));
-        }
         return lhs.unwrap();
     }
 
@@ -360,7 +362,7 @@ impl<'a> Parser<'a> {
 
     fn parse_stmt_assign(&mut self) {
         self.stat.set_type(StatementType::ASSIGN);
-        self.stat.var_name = self.expect_identifier();
+        self.stat.history_expr = Some(self.history_expr());
         self.expect(TokenType::ASSIGNMENT);
         self.stat.expr = Some(self.expr());
     }

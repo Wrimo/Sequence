@@ -115,7 +115,6 @@ impl Memory {
     }
 
     pub fn update_history(&mut self, name: String, value: VariableType) {
-        
         self.cells
             .entry(name.clone())
             .and_modify(|ent| (**ent).borrow_mut().add(value.clone()) )// (*ent).borrow_mut().add(value.clone()))
