@@ -9,10 +9,11 @@ use crate::interpreter::executor::run_program;
 
 fn main() {
     // TODO:
-    // [x] better error messages
+    // [] better error messages
     // [] tests
     // [] clean up modules (need to do this again)
     // [x] rewrite parser
+    // [] probably could replace a lot of uses of String with &str
 
     let result = command_line::handle_args(&env::args().collect());
     
@@ -23,6 +24,5 @@ fn main() {
     });
 
     let path = PathBuf::from(&result.file_name);
-
     run_program(&buf, &path, result.parameters);
 }

@@ -1,24 +1,10 @@
 expect true { 
-    a <- 1 
+    a <- 1
     a <- 2
-    a <- 3 
+    a <- 3
+    a <- 4
+    a <- 5 
+    a <- all a
 
-    b <- 0
-    b <- [a]
-    b <- 4
-    b <- 5
-    reveal b
-
-    c <- -1
-    c <- [b]
-    
     reveal a
-    reveal b
-    reveal c
-    -- should print 5
-    print("a", prev a)
-    print("b", prev b)
-    print("c", prev c)
-
-    [[c]]
 }

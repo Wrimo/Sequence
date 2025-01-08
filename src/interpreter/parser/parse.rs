@@ -251,8 +251,11 @@ impl<'a> Parser<'a> {
         } else if self.accept(TokenType::VERTICALBAR) {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
         } else if self.accept(TokenType::PREV) {
-            return Expression::new(ExpressionType::PREV, Some(self.expr()), None);
-        } else if self.accept(TokenType::RSQUAREBRACKET) {
+            return Expression::new(ExpressionType::PREV(self.expect_identifier().unwrap()), None, None);
+        } else if self.accept(TokenType::ALL) { 
+            return Expression::new(ExpressionType::ALL(self.expect_identifier().unwrap()), None, None);
+        }
+        else if self.accept(TokenType::RSQUAREBRACKET) {
             let name = self.expect_identifier().unwrap();
             self.expect(TokenType::LSQUAREBRACKET);
             return Expression::new(ExpressionType::SUBHISTORY(name), None, None);

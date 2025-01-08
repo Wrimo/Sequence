@@ -110,17 +110,19 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
             let borrow = history.borrow();
             borrow.get_past(borrow.len() - 1).clone()
         }
-        ExpressionType::PREV => {
-            let value: VariableType = calculate_expression(lhs.unwrap(), memory);
+        ExpressionType::PREV(s) => {
+            let history: SharedHistory = memory.get_history(s);
 
-            if let VariableType::History(history) = value {
-                let borrow = history.borrow();
-                if borrow.len() == 1 {
-                    return borrow.get_past(0).clone();
-                }
-                return borrow.get_past(borrow.len() - 2).clone();
+            let borrow = history.borrow();
+            if borrow.len() == 1 {
+                return borrow.get_past(0).clone();
             }
-            panic!("Tried to get previous value of expression that is not a History")
+            return borrow.get_past(borrow.len() - 2).clone();
+        }
+
+        ExpressionType::ALL(s) => {
+            let history: SharedHistory = memory.get_history(s);
+            return VariableType::History(history)
         }
         ExpressionType::ACCESSOR => {
             let name = expr.var_name.unwrap();
@@ -150,7 +152,10 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
 
         ExpressionType::LEN(s) => VariableType::INTEGER(memory.get_history(s).borrow().len() as i64),
 
-        _ => VariableType::INTEGER(-1), // should do something else here!
+        _ => {
+            eprintln!("recevied bad expression type");
+            panic!();
+        },
     }
 }
     
