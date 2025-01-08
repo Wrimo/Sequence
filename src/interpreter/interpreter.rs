@@ -1,10 +1,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::str::Matches;
-use std::thread::current;
+
+
 
 use super::parser::expr::{Expression, ExpressionType};
-use super::parser::statement::{self, Program, Statement, StatementType};
+use super::parser::statement::{Program, Statement, StatementType};
 use super::runtime_types::{History, HistoryCollection, Memory, VariableType};
 use crate::interpreter::runtime_types::SharedHistory;
 use crate::user_options::USER_OPTIONS;
@@ -192,7 +192,7 @@ fn run_statements(
             StatementType::ASSIGN => {
                 let val = calculate_expression(statement.expr.clone().unwrap(), memory);
                 let name: String = statement.var_name.clone().unwrap();
-
+                
                 memory.update_history(name, val);
             }
 
