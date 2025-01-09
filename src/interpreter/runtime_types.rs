@@ -18,7 +18,7 @@ impl VariableType {
             Self::INTEGER(x) => *x >= 1,
             Self::BOOL(x) => *x,
             Self::STRING(x) => *x != "".to_string(),
-            Self::History(x) => x.borrow_mut().items.len() != 0, 
+            Self::History(x) => x.borrow_mut().items.len() != 0,
         }
     }
 
@@ -39,8 +39,8 @@ impl VariableType {
         match self {
             Self::BOOL(x) => *self = Self::INTEGER(*x as i64),
             Self::FLOAT(x) => *self = Self::INTEGER(*x as i64),
-            Self::INTEGER(_x) => {},
-            Self::STRING(_x) =>  panic!("Tried to convert String to int"),
+            Self::INTEGER(_x) => {}
+            Self::STRING(_x) => panic!("Tried to convert String to int"),
             Self::History(_x) => panic!("Tried to convert History to int"),
         }
         self.clone()
@@ -77,16 +77,12 @@ pub type HistoryCollection = Vec<SharedHistory>;
 pub type SharedHistory = Rc<RefCell<History>>;
 
 impl History {
-    pub fn new() -> History { 
-        History { 
-            items: vec![],
-        }
+    pub fn new() -> History {
+        History { items: vec![] }
     }
 
     pub fn alloc(_name: String, val: VariableType) -> SharedHistory {
-        Rc::new(RefCell::new(History {
-            items: vec![val],
-        }))
+        Rc::new(RefCell::new(History { items: vec![val] }))
     }
     pub fn add(&mut self, val: VariableType) {
         self.items.push(val);
@@ -107,20 +103,30 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Memory {
-        Memory { cells: HashMap::new() }
+        Memory {
+            cells: HashMap::new(),
+        }
     }
 
     pub fn get_history(&self, name: String) -> SharedHistory {
         self.cells.get(&name).unwrap().clone()
     }
 
+    pub fn get_or_create_history(&mut self, name: String) -> SharedHistory {
+        if !self.cells.contains_key(&name) {
+            self.insert_history(name.clone(), Rc::new(RefCell::new(History { items: Vec::new() }))); // TODo - should make this apart of the History alloc
+        }
+
+        return self.get_history(name);
+    }
+
     pub fn update_history(&mut self, name: String, value: VariableType) {
         self.cells
             .entry(name.clone())
-            .and_modify(|ent| (**ent).borrow_mut().add(value.clone()) )// (*ent).borrow_mut().add(value.clone()))
+            .and_modify(|ent| (**ent).borrow_mut().add(value.clone())) // (*ent).borrow_mut().add(value.clone()))
             .or_insert(History::alloc(name, value));
     }
- 
+
     pub fn insert_history(&mut self, name: String, history: Rc<RefCell<History>>) {
         self.cells.insert(name, history);
     }

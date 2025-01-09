@@ -126,9 +126,9 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
     }
 }
 
-fn evalulate_history_expression(memory: &Memory, expr: Box<HistoryExpression>) -> SharedHistory {
+fn evalulate_history_expression(memory: &mut Memory, expr: Box<HistoryExpression>) -> SharedHistory {
     match expr.exp_type {
-        HistoryExpressionType::IDENTIFIER(s) => memory.get_history(s), // TODO need to allocate new history when this happens, how was I handling this in the past ? 
+        HistoryExpressionType::IDENTIFIER(s) => memory.get_or_create_history(s),
 
         HistoryExpressionType::PREV => {
             let history: SharedHistory = evalulate_history_expression(memory, expr.lhs.unwrap());
