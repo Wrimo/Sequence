@@ -119,6 +119,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
             VariableType::INTEGER(memory.get_history(s).borrow().len() as i64)
         }
 
+        ExpressionType::HISTORY_EXPR(history_expr) => VariableType::History(evalulate_history_expression(memory, history_expr)),
+
         _ => {
             eprintln!("recevied bad expression type");
             panic!();

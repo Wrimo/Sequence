@@ -160,15 +160,7 @@ impl<'a> Parser<'a> {
         return code_block;
     }
 
-    fn explicit_history_expr(&mut self) -> Box<HistoryExpression> {
-        self.expect(TokenType::LBRACKET);
-        let expr = self.history_expr();
-        self.expect(TokenType::RBRACKET);
-        return expr;
-    }
-
     fn history_expr(&mut self) -> Box<HistoryExpression> {
-            
             if self.accept(TokenType::PREV) {
                 return  HistoryExpression::new(HistoryExpressionType::PREV, Some(self.history_expr_fact()), None)
             }
@@ -304,7 +296,9 @@ impl<'a> Parser<'a> {
     }
 
     fn factor(&mut self) -> Box<Expression> {
-        match self.next_token().token_type {
+        let value = self.next_token();
+        println!("{:?}", value.token_type.clone());
+        match value.token_type {
             TokenType::IDENTIFIER(s) => Expression::new(ExpressionType::IDENTIFIER(s), None, None),
             TokenType::INTEGER(x) => Expression::new(ExpressionType::INTEGER(x), None, None),
             TokenType::FLOAT(x) => Expression::new(ExpressionType::FLOAT(x), None, None),
@@ -312,10 +306,16 @@ impl<'a> Parser<'a> {
             TokenType::FALSE => Expression::new(ExpressionType::BOOL(false), None, None),
             TokenType::STRING(x) => Expression::new(ExpressionType::STRING(x), None, None),
 
-            TokenType::LPAREN => {
+            TokenType::LPAREN => { 
                 let exp = self.expr();
                 self.expect(TokenType::RPAREN);
                 return exp;
+            }
+
+            TokenType::LSQUAREBRACKET => {
+                let history_exp = self.history_expr();
+                self.expect(TokenType::RSQUAREBRACKET);
+                return Expression::new(ExpressionType::HISTORY_EXPR(history_exp), None, None)
             }
 
             _ => {

@@ -21,6 +21,7 @@ pub enum ExpressionType {
     EXPONENT,
     UMIN, 
     ABS,
+    HISTORY_EXPR(Box<HistoryExpression>),
     IDENTIFIER(String),
     BOOL(bool),
     INTEGER(i64),
