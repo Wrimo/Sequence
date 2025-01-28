@@ -1,4 +1,6 @@
-use super::{parsing_types};
+use super::{lexer, parsing_types};
+use crate::interpreter::parser::parsing_types::TokenType;
+use crate::interpreter::runtime_types::History;
 
 fn expect_tokens(tokens: Vec<parsing_types::Token>, expected: Vec<parsing_types::TokenType>) {
     let len = tokens.len();

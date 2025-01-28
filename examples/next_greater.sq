@@ -5,6 +5,7 @@ begin { -- expects a histories named a and max
 }
 expect i == #a {
     max <- current
+    print(max)
 }
 
 if (i::$a < current and i::$a > max)  {

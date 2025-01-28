@@ -13,6 +13,7 @@ fn main() {
     // [] tests
     // [] clean up modules (need to do this again)
     // [x] rewrite parser
+    // [] add an option print if the a file is running at the top level
 
     let result = command_line::handle_args(&env::args().collect());
     
