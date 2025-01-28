@@ -1,9 +1,3 @@
 expect true { 
-    a <- 1
-    a <- 2
-    b <- 0
-    b <- [a]
-    b <- 2
-
-    reveal b
+    [b] <- 1 
 }

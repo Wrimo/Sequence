@@ -1,11 +1,10 @@
-
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::{process};
-use crate::interpreter::runtime_types::{History, HistoryCollection, SharedHistory, VariableType};
-use crate::interpreter::parser::parsing_types::{Token, TokenType};
 use crate::interpreter::parser::lexer::symbol_analysis;
+use crate::interpreter::parser::parsing_types::{Token, TokenType};
+use crate::interpreter::runtime_types::{History, HistoryCollection, SharedHistory, VariableType};
 use crate::user_options::USER_OPTIONS;
+use std::cell::RefCell;
+use std::process;
+use std::rc::Rc;
 
 pub struct ArgResult {
     pub file_name: String,
@@ -27,7 +26,7 @@ pub fn handle_args(args: &Vec<String>) -> ArgResult {
         if args[i].starts_with("-") {
             match args[i].as_str() {
                 "-d" => USER_OPTIONS.lock().unwrap().debug = true,
-                _ => {},
+                _ => {}
             }
             continue;
         }
@@ -44,29 +43,28 @@ pub fn handle_args(args: &Vec<String>) -> ArgResult {
 
 fn get_parameters(args: &Vec<String>, index: usize) -> Option<HistoryCollection> {
     if index >= args.len() {
-        return None; 
+        return None;
     }
 
     let mut histories: HistoryCollection = HistoryCollection::new();
     for i in index..args.len() {
-
-        let tokens: Option<Vec<Token>>= symbol_analysis(args[i].as_str());
+        let tokens: Option<Vec<Token>> = symbol_analysis(args[i].as_str());
         let history = parse_history(tokens.unwrap());
-        
+
         histories.push(history);
     }
 
     return Some(histories);
 }
 
-// history syntax 
+// history syntax
 // {1, 2, 3, 4, 10}
-fn parse_history(tokens: Vec<Token>) -> SharedHistory { 
+fn parse_history(tokens: Vec<Token>) -> SharedHistory {
     let mut history = History::new();
 
     assert!(tokens[0].token_type == TokenType::LBRACKET);
 
-    for i in (1..tokens.len()).step_by(2) { 
+    for i in (1..tokens.len()).step_by(2) {
         match &tokens[i].token_type {
             TokenType::FLOAT(x) => history.add(VariableType::FLOAT(*x)),
             TokenType::INTEGER(x) => history.add(VariableType::INTEGER(*x)),
@@ -75,12 +73,14 @@ fn parse_history(tokens: Vec<Token>) -> SharedHistory {
             _ => panic!("bad token in parameter {:?}", tokens[i].token_type),
         };
 
-        assert!(tokens[i+1].token_type == TokenType::COMMA || tokens[i+1].token_type == TokenType::RBRACKET);
+        assert!(
+            tokens[i + 1].token_type == TokenType::COMMA
+                || tokens[i + 1].token_type == TokenType::RBRACKET
+        );
     }
-    assert!(tokens[tokens.len()-1].token_type == TokenType::RBRACKET);
+    assert!(tokens[tokens.len() - 1].token_type == TokenType::RBRACKET);
     return Rc::new(RefCell::new(history));
 }
-
 
 fn usage(progname: &String) {
     eprintln!("Usage:");

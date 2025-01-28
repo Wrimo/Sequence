@@ -46,6 +46,13 @@ impl VariableType {
         self.clone()
     }
 
+    pub fn force_scalar(&self) -> Self {
+        match self {
+            Self::History(_) => panic!("Tried to get a history value in a scalar context."),
+            _ => self.clone()
+        }
+    }
+
     pub fn abs(&mut self) -> Self {
         self.bool_to_number();
         match self {

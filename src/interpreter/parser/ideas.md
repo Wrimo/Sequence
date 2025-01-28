@@ -39,7 +39,12 @@ reaval b
 reaval b
 -- [[1, 2, 3, 4], [5, 6, 7]]
 
+
+-- how would b + 1 be evalulated? 
+-- runtime error?
+
 ```
+
 
 so the left hand of the assignment need to be an expression too
 

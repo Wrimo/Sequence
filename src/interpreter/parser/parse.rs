@@ -20,14 +20,17 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token>, prog_cache: &'a mut HashMap<String, Box<Program>>, file_path: &'a PathBuf) -> Parser<'a> {
+    pub fn new(
+        tokens: Vec<Token>,
+        prog_cache: &'a mut HashMap<String, Box<Program>>,
+        file_path: &'a PathBuf,
+    ) -> Parser<'a> {
         let mut directory = file_path.clone();
         let mut tokens = tokens.clone(); // TODO: don't make the parse require a newline at the end
         tokens.push(Token {
             token_type: TokenType::NEWLINE,
             line: 99999,
         });
-
 
         PathBuf::pop(&mut directory);
         Parser {
@@ -47,7 +50,8 @@ impl<'a> Parser<'a> {
         return &self.prog;
     }
 
-    fn error_missing_token(&self, t: TokenType) { // TODO: i should make a more general fail function here that can be called by the switch statements 
+    fn error_missing_token(&self, t: TokenType,) {
+        // TODO: i should make a more general fail function here that can be called by the switch statements
         eprintln!(
             "line {}: expected {:?} got {:?}",
             self.current_token.line + 1,
@@ -97,7 +101,10 @@ impl<'a> Parser<'a> {
     }
 
     fn expect_identifier(&mut self) -> Option<String> {
-        if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) {
+        if self
+            .current_token
+            .equals(TokenType::IDENTIFIER(String::from("")))
+        {
             let t = self.current_token.clone();
             self.next_token();
             if let TokenType::IDENTIFIER(s) = t.token_type {
@@ -115,7 +122,7 @@ impl<'a> Parser<'a> {
             loop {
                 params.push(self.expect_identifier().unwrap());
 
-                if !self.accept(TokenType::COMMA) { 
+                if !self.accept(TokenType::COMMA) {
                     break;
                 }
             }
@@ -161,31 +168,35 @@ impl<'a> Parser<'a> {
     }
 
     fn history_expr(&mut self) -> Box<HistoryExpression> {
-            if self.accept(TokenType::PREV) {
-                return  HistoryExpression::new(HistoryExpressionType::PREV, Some(self.history_expr_fact()), None)
-            }
-            
-            return self.history_expr_fact();
+        if self.accept(TokenType::PREV) {
+            return HistoryExpression::new(
+                HistoryExpressionType::PREV,
+                Some(self.history_expr_fact()),
+                None,
+            );
+        }
+
+        return self.history_expr_fact();
     }
-    
 
     fn history_expr_fact(&mut self) -> Box<HistoryExpression> {
-        match self.next_token().token_type { 
+        match self.next_token().token_type {
             TokenType::IDENTIFIER(s) => HistoryExpression::new(HistoryExpressionType::IDENTIFIER(s), None, None),
 
             TokenType::LPAREN => {
                 let exp = self.history_expr();
                 self.expect(TokenType::RPAREN);
-                return exp;
+                exp
             }
 
-            _ => panic!("bad tokensss"),
+            _ => panic!("bad token"),
         }
     }
 
     fn expr(&mut self) -> Box<Expression> {
         let mut lhs = self.expr_comp();
-        while self.current_token.equals(TokenType::AND) || self.current_token.equals(TokenType::OR) {
+        while self.current_token.equals(TokenType::AND) || self.current_token.equals(TokenType::OR)
+        {
             let old = self.next_token();
             let rhs = self.expr_comp();
             match old.token_type {
@@ -209,12 +220,24 @@ impl<'a> Parser<'a> {
             let old = self.next_token();
             let rhs = self.epxr_add();
             match old.token_type {
-                TokenType::GETHANOP => lhs = Expression::new(ExpressionType::GTHE, Some(lhs), Some(rhs)),
-                TokenType::GTHANOP => lhs = Expression::new(ExpressionType::GTH, Some(lhs), Some(rhs)),
-                TokenType::EQUALOP => lhs = Expression::new(ExpressionType::EQU, Some(lhs), Some(rhs)),
-                TokenType::NOTEQUALOP => lhs = Expression::new(ExpressionType::NEQU, Some(lhs), Some(rhs)),
-                TokenType::LTHANOP => lhs = Expression::new(ExpressionType::LTH, Some(lhs), Some(rhs)),
-                TokenType::LETHANOP => lhs = Expression::new(ExpressionType::LTHE, Some(lhs), Some(rhs)),
+                TokenType::GETHANOP => {
+                    lhs = Expression::new(ExpressionType::GTHE, Some(lhs), Some(rhs))
+                }
+                TokenType::GTHANOP => {
+                    lhs = Expression::new(ExpressionType::GTH, Some(lhs), Some(rhs))
+                }
+                TokenType::EQUALOP => {
+                    lhs = Expression::new(ExpressionType::EQU, Some(lhs), Some(rhs))
+                }
+                TokenType::NOTEQUALOP => {
+                    lhs = Expression::new(ExpressionType::NEQU, Some(lhs), Some(rhs))
+                }
+                TokenType::LTHANOP => {
+                    lhs = Expression::new(ExpressionType::LTH, Some(lhs), Some(rhs))
+                }
+                TokenType::LETHANOP => {
+                    lhs = Expression::new(ExpressionType::LTHE, Some(lhs), Some(rhs))
+                }
 
                 _ => {}
             }
@@ -224,13 +247,19 @@ impl<'a> Parser<'a> {
 
     fn epxr_add(&mut self) -> Box<Expression> {
         let mut lhs = self.expr_mul();
-        while self.current_token.equals(TokenType::ADDOP) || self.current_token.equals(TokenType::SUBOP) {
+        while self.current_token.equals(TokenType::ADDOP)
+            || self.current_token.equals(TokenType::SUBOP)
+        {
             let old = self.next_token();
             let rhs = self.expr_mul();
 
             match old.token_type {
-                TokenType::ADDOP => lhs = Expression::new(ExpressionType::ADD, Some(lhs), Some(rhs)),
-                TokenType::SUBOP => lhs = Expression::new(ExpressionType::SUB, Some(lhs), Some(rhs)),
+                TokenType::ADDOP => {
+                    lhs = Expression::new(ExpressionType::ADD, Some(lhs), Some(rhs))
+                }
+                TokenType::SUBOP => {
+                    lhs = Expression::new(ExpressionType::SUB, Some(lhs), Some(rhs))
+                }
 
                 _ => {}
             }
@@ -247,9 +276,15 @@ impl<'a> Parser<'a> {
             let old = self.next_token();
             let rhs = self.expr_expo();
             match old.token_type {
-                TokenType::MULOP => lhs = Expression::new(ExpressionType::MUL, Some(lhs), Some(rhs)),
-                TokenType::DIVOP => lhs = Expression::new(ExpressionType::DIV, Some(lhs), Some(rhs)),
-                TokenType::MODOP => lhs = Expression::new(ExpressionType::MOD, Some(lhs), Some(rhs)),
+                TokenType::MULOP => {
+                    lhs = Expression::new(ExpressionType::MUL, Some(lhs), Some(rhs))
+                }
+                TokenType::DIVOP => {
+                    lhs = Expression::new(ExpressionType::DIV, Some(lhs), Some(rhs))
+                }
+                TokenType::MODOP => {
+                    lhs = Expression::new(ExpressionType::MOD, Some(lhs), Some(rhs))
+                }
 
                 _ => {}
             }
@@ -297,7 +332,6 @@ impl<'a> Parser<'a> {
 
     fn factor(&mut self) -> Box<Expression> {
         let value = self.next_token();
-        println!("{:?}", value.token_type.clone());
         match value.token_type {
             TokenType::IDENTIFIER(s) => Expression::new(ExpressionType::IDENTIFIER(s), None, None),
             TokenType::INTEGER(x) => Expression::new(ExpressionType::INTEGER(x), None, None),
@@ -306,7 +340,7 @@ impl<'a> Parser<'a> {
             TokenType::FALSE => Expression::new(ExpressionType::BOOL(false), None, None),
             TokenType::STRING(x) => Expression::new(ExpressionType::STRING(x), None, None),
 
-            TokenType::LPAREN => { 
+            TokenType::LPAREN => {
                 let exp = self.expr();
                 self.expect(TokenType::RPAREN);
                 return exp;
@@ -315,11 +349,13 @@ impl<'a> Parser<'a> {
             TokenType::LSQUAREBRACKET => {
                 let history_exp = self.history_expr();
                 self.expect(TokenType::RSQUAREBRACKET);
-                return Expression::new(ExpressionType::HISTORY_EXPR(history_exp), None, None)
+                return Expression::new(ExpressionType::HISTORY_EXPR(history_exp), None, None);
             }
 
             _ => {
-                self.error_custom(format!("expression error for token {:?}", self.current_token).as_str());
+                self.error_custom(
+                    format!("expression error for token {:?}", self.current_token).as_str(),
+                );
                 return Expression::new(ExpressionType::NONE, None, None);
             }
         }
@@ -333,7 +369,9 @@ impl<'a> Parser<'a> {
             }
 
             _ => {
-                self.error_custom(format!("expected STRING, got {:?}", self.current_token).as_str());
+                self.error_custom(
+                    format!("expected STRING, got {:?}", self.current_token).as_str(),
+                );
                 process::abort();
             }
         }
@@ -341,9 +379,17 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) {
         self.stat.reset();
-        if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::ASSIGNMENT) {
+        if self
+            .current_token
+            .equals(TokenType::IDENTIFIER(String::from("")))
+            && self.ahead(1).equals(TokenType::ASSIGNMENT)
+        {
             self.parse_stmt_assign();
-        } else if self.current_token.equals(TokenType::IDENTIFIER(String::from(""))) && self.ahead(1).equals(TokenType::COPY) {
+        } else if self
+            .current_token
+            .equals(TokenType::IDENTIFIER(String::from("")))
+            && self.ahead(1).equals(TokenType::COPY)
+        {
             self.parse_stmt_copy();
         } else if self.accept(TokenType::BEGIN) {
             self.parse_stmt_begin();
@@ -440,8 +486,12 @@ impl<'a> Parser<'a> {
                 eprintln!("could not read file: {}", file_name);
                 process::exit(1);
             });
-            
-            let mut p = Parser::new(symbol_analysis(&buf).unwrap(), self.prog_cache, &new_directory);
+
+            let mut p = Parser::new(
+                symbol_analysis(&buf).unwrap(),
+                self.prog_cache,
+                &new_directory,
+            );
             let prog = Box::new(p.run().clone());
             self.stat.sub_program = Some(prog.clone());
             self.prog_cache.insert(file_name, prog);
@@ -455,9 +505,9 @@ impl<'a> Parser<'a> {
             loop {
                 let ident: String = self.expect_identifier().unwrap();
                 shared.push(ident);
-                
-                if !self.accept(TokenType::COMMA) { 
-                    break; 
+
+                if !self.accept(TokenType::COMMA) {
+                    break;
                 }
             }
             self.stat.var_list = Some(shared);

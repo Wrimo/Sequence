@@ -112,7 +112,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::IDENTIFIER(s) => {
             let history: SharedHistory = memory.get_history(s);
             let borrow = history.borrow();
-            borrow.get_past(borrow.len() - 1).clone()
+
+            borrow.get_past(borrow.len() - 1).force_scalar()
         }
 
         ExpressionType::LEN(s) => {

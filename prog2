@@ -1,5 +1,14 @@
 expect true {
     a <- 1 
     a <- 2
-    print(prev 1)
+    c <- 3
+    c <- 4
+
+    b <- [a]
+    b <- [c]
+
+    c <- 5
+    
+    t <- [prev b]
+    reveal t
 }
