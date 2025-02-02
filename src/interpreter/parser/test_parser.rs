@@ -1,11 +1,11 @@
+#[cfg(test)]
 use std::{collections::HashMap, path::PathBuf};
-
-
-
+#[cfg(test)]
 use crate::interpreter::parser::expr::{Expression, ExpressionType};
-
+#[cfg(test)]
 use super::{lexer, parse::{Parser}, statement::{Program, StatementType}};
 
+#[cfg(test)]
 fn expect_parse(s: &str, body: Vec<StatementType>) {
     let prog = run_parser(s);
 
@@ -15,6 +15,7 @@ fn expect_parse(s: &str, body: Vec<StatementType>) {
     }
 }
 
+#[cfg(test)]
 fn run_parser(s: &str) ->  Program {
     let mut prog_cache: HashMap<String, Box<Program>> = HashMap::new();
     let test_path: PathBuf = PathBuf::new();

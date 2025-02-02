@@ -8,7 +8,6 @@ begin {  -- sort breaks for lists with repeated values and negative numbers
     sorted <- max
 }
 expect i == #a { 
-    reveal a
     reveal sorted
 }
 

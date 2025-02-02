@@ -79,7 +79,8 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             i += 1;
             token.token_type = TokenType::NEWLINE;
 
-            if tokens[tokens.len() - 1].token_type != TokenType::NEWLINE {
+            let len = tokens.len();
+            if  len == 0 || tokens[len  - 1].token_type != TokenType::NEWLINE { // simplify \n \n \n to \n
                 tokens.push(token);
             }
             continue;

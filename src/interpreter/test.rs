@@ -1,13 +1,6 @@
-use std::collections::HashMap;
+#[cfg(test)]
 use std::process::Command;
 
-
-// fn run_script(file: &str, args: Vec<&str>) {
-//     let command = Command::new("cargo").ag
-//              .args("../../examples" + file)
-//              .spawn()
-//              .expect(expected_output)
-// }
 
 #[test]
 fn test_add_1_1() {

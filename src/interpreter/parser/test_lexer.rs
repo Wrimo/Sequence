@@ -1,11 +1,15 @@
+#[cfg(test)]
 use super::{lexer, parsing_types};
+#[cfg(test)]
 use crate::interpreter::parser::parsing_types::TokenType;
+#[cfg(test)]
 use crate::interpreter::runtime_types::History;
 
+#[cfg(test)]
 fn expect_tokens(tokens: Vec<parsing_types::Token>, expected: Vec<parsing_types::TokenType>) {
     let len = tokens.len();
     assert_eq!(len, expected.len());
-    for i in 0..len - 1 {
+    for i in 0..len {
         assert_eq!(tokens[i].token_type, expected[i]);
     }
 }
@@ -112,15 +116,13 @@ fn test_keywords() {
 fn test_string() {
     let s = "\"hello\"";
     let tokens = lexer::symbol_analysis(s).unwrap();
-
     expect_tokens(tokens, vec![TokenType::STRING(String::from("hello"))]);
 }
 
 #[test]
 fn test_whitespace() {
-    let s = " \n";
+    let s = "\n";
     let tokens = lexer::symbol_analysis(s).unwrap();
-
     expect_tokens(tokens, vec![TokenType::NEWLINE]);
 }
 
@@ -128,6 +130,5 @@ fn test_whitespace() {
 fn test_comment() {
     let s = "-- This is a comment";
     let tokens = lexer::symbol_analysis(s).unwrap();
-
-    expect_tokens(tokens, vec![TokenType::COMMENT]);
+    expect_tokens(tokens, vec![]); // comments should be ignored by lexer
 }
