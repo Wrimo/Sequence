@@ -30,6 +30,7 @@ pub enum TokenType {
     VERTICALBAR,
     NEWLINE,
     PRINT,
+    TPRINT,
     PREV,
     BEGIN,
     EXPECT,
@@ -37,7 +38,7 @@ pub enum TokenType {
     REVEAL,
     IF,
     ELSE,
-    ELIF, 
+    ELIF,
     AND,
     OR,
     NOT,
@@ -56,7 +57,7 @@ pub enum TokenType {
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
-    pub line: usize, 
+    pub line: usize,
 }
 
 #[derive(Debug, Clone)]
@@ -97,6 +98,7 @@ impl FromStr for TokenType {
             "SEMICOLON" => Ok(TokenType::SEMICOLON),
             "NEWLINE" => Ok(TokenType::NEWLINE),
             "PRINT" => Ok(TokenType::PRINT),
+            "TPRINT" => Ok(TokenType::TPRINT),
             "PREV" => Ok(TokenType::PREV),
             "BEGIN" => Ok(TokenType::BEGIN),
             "REVEAL" => Ok(TokenType::REVEAL),
@@ -104,7 +106,7 @@ impl FromStr for TokenType {
             "IF" => Ok(TokenType::IF),
             "ELSE" => Ok(TokenType::ELSE),
             "ELIF" => Ok(TokenType::ELIF),
-            "AND" => Ok(TokenType::AND), 
+            "AND" => Ok(TokenType::AND),
             "OR" => Ok(TokenType::OR),
             "NOT" => Ok(TokenType::NOT),
             "ABS" => Ok(TokenType::ABS),
@@ -112,7 +114,7 @@ impl FromStr for TokenType {
             "EXPONENT" => Ok(TokenType::EXPONENT),
             "VERTICALBAR" => Ok(TokenType::VERTICALBAR),
             "COMMA" => Ok(TokenType::COMMA),
-            "ACCESSOR" => Ok(TokenType::ACCESSOR), 
+            "ACCESSOR" => Ok(TokenType::ACCESSOR),
             "QUOTE" => Ok(TokenType::QUOTE),
             "RUN" => Ok(TokenType::RUN),
             "WITH" => Ok(TokenType::WITH),
@@ -132,7 +134,7 @@ impl PartialEq for TokenType {
     }
 }
 
-impl PartialEq for Token { 
+impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
         self.token_type == other.token_type
     }
@@ -142,8 +144,8 @@ impl PartialEq for Token {
     }
 }
 
-impl Token { 
-    pub fn equals(&self, other: TokenType) -> bool { 
+impl Token {
+    pub fn equals(&self, other: TokenType) -> bool {
         self.token_type == other
     }
 }

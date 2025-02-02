@@ -19,7 +19,7 @@ fn expect_parse(s: &str, body: Vec<StatementType>) {
 fn run_parser(s: &str) ->  Program {
     let mut prog_cache: HashMap<String, Box<Program>> = HashMap::new();
     let test_path: PathBuf = PathBuf::new();
-    let mut p = Parser::new(lexer::symbol_analysis(&s).unwrap(), &mut prog_cache, &test_path);
+    let mut p = Parser::new(lexer::symbol_analysis(&s).unwrap(), &mut prog_cache, &test_path, true);
     return p.run().clone();
 }
 

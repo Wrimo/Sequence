@@ -1,4 +1,5 @@
 take a, b
 expect true {
     a <- a + b
+    tprint(a)
 }
