@@ -196,8 +196,8 @@ fn get_printable_value(x: &VariableType) -> String {
     }
 }
 
-fn run_statements(program: &Vec<Statement>, memory: &mut Memory) {
-    for statement in program {
+fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut Memory) {
+    for statement in statements {
         if USER_OPTIONS.lock().unwrap().debug {
             println!("{:?}", statement.statement_type.clone());
         }
@@ -232,18 +232,35 @@ fn run_statements(program: &Vec<Statement>, memory: &mut Memory) {
                     let x = calculate_expression(statement.alt_exps[i].clone(), memory);
                     println!("{}", get_printable_value(&x));
                 }
-                println!("");
+            }
+
+            StatementType::TPRINT => {
+                if !program.top_level {
+                    continue;
+                }
+                let exp = statement.expr.as_ref().unwrap(); // TODO: copied from print for now, will clean up executor later
+                if matches!(exp.exp_type, ExpressionType::NONE) {
+                    println!("");
+                    continue;
+                }
+                let x = calculate_expression(statement.expr.clone().unwrap(), memory);
+                println!("{}", get_printable_value(&x));
+
+                for i in 0..statement.alt_exps.len() {
+                    let x = calculate_expression(statement.alt_exps[i].clone(), memory);
+                    println!("{}", get_printable_value(&x));
+                }
             }
 
             StatementType::IF => {
                 if calculate_expression(statement.expr.clone().unwrap(), memory).as_bool() {
-                    run_statements(&statement.code_block.as_ref().unwrap(), memory);
+                    run_statements(program, &statement.code_block.as_ref().unwrap(), memory);
                 } else if statement.alt_code_blocks.len() != 0 {
                     for i in 0..statement.alt_code_blocks.len() {
                         if i >= statement.alt_exps.len()
                             || calculate_expression(statement.alt_exps[i].clone(), memory).as_bool()
                         {
-                            run_statements(&statement.alt_code_blocks[i], memory);
+                            run_statements(program, &statement.alt_code_blocks[i], memory);
                             break;
                         }
                     }
@@ -335,15 +352,15 @@ pub fn execute_program(
         println!("WARNING: Running with no expect block, program will not terminate!");
     }
     if let Some(begin) = &program.begin {
-        run_statements(&begin.code_block.as_ref().unwrap(), &mut memory);
+        run_statements(program, &begin.code_block.as_ref().unwrap(), &mut memory);
     }
     'prog_loop: loop {
-        run_statements(&program.body, &mut memory);
+        run_statements(program, &program.body, &mut memory);
         // expect block logic
         for i in 0..program.expect.len() {
             if calculate_expression(program.expect[i].expr.clone().unwrap(), &mut memory).as_bool()
             {
-                run_statements(program.expect[i].code_block.as_ref().unwrap(), &mut memory);
+                run_statements(program, program.expect[i].code_block.as_ref().unwrap(), &mut memory);
                 break 'prog_loop;
             }
         }

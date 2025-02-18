@@ -24,6 +24,7 @@ impl<'a> Parser<'a> {
         tokens: Vec<Token>,
         prog_cache: &'a mut HashMap<String, Box<Program>>,
         file_path: &'a PathBuf,
+        top_level: bool
     ) -> Parser<'a> {
         let mut directory = file_path.clone();
         let mut tokens = tokens.clone(); // TODO: don't make the parse require a newline at the end
@@ -37,7 +38,7 @@ impl<'a> Parser<'a> {
             current_token: tokens[0].clone(),
             tokens: tokens,
             index: 0,
-            prog: Program::new(String::from(file_path.to_string_lossy())),
+            prog: Program::new(String::from(file_path.to_string_lossy()), top_level),
             stat: Statement::new(),
             directory: directory,
             prog_cache: prog_cache,
@@ -356,6 +357,9 @@ impl<'a> Parser<'a> {
                 self.error_custom(
                     format!("expression error for token {:?}", self.current_token).as_str(),
                 );
+                self.error_custom(
+                    format!("expression error for token {:?}", self.current_token).as_str(),
+                );
                 return Expression::new(ExpressionType::NONE, None, None);
             }
         }
@@ -369,6 +373,9 @@ impl<'a> Parser<'a> {
             }
 
             _ => {
+                self.error_custom(
+                    format!("expected STRING, got {:?}", self.current_token).as_str(),
+                );
                 self.error_custom(
                     format!("expected STRING, got {:?}", self.current_token).as_str(),
                 );
@@ -399,6 +406,8 @@ impl<'a> Parser<'a> {
             self.parse_stmt_reveal();
         } else if self.accept(TokenType::PRINT) {
             self.parse_stmt_print();
+        } else if self.accept(TokenType::TPRINT) {
+            self.parse_stmt_tprint();
         } else if self.accept(TokenType::IF) {
             self.parse_stmt_if();
         } else if self.accept(TokenType::RUN) {
@@ -438,6 +447,15 @@ impl<'a> Parser<'a> {
 
     fn parse_stmt_print(&mut self) {
         self.stat.set_type(StatementType::PRINT);
+        self.parse_print_value();
+    }
+
+    fn parse_stmt_tprint(&mut self) {
+        self.stat.set_type(StatementType::TPRINT);
+        self.parse_print_value();
+    }
+
+    fn parse_print_value(&mut self) {
         self.expect(TokenType::LPAREN);
 
         if self.accept(TokenType::RPAREN) {
@@ -491,6 +509,7 @@ impl<'a> Parser<'a> {
                 symbol_analysis(&buf).unwrap(),
                 self.prog_cache,
                 &new_directory,
+                false,
             );
             let prog = Box::new(p.run().clone());
             self.stat.sub_program = Some(prog.clone());

@@ -12,7 +12,7 @@ pub fn run_program(input: &str, directory: &PathBuf, parameters: Option<HistoryC
     let tokens = parser::lexer::symbol_analysis(input).unwrap(); // better errors later
     let mut prog_cache: HashMap<String, Box<Program>> = HashMap::new(); 
 
-    let mut parser = parse::Parser::new(tokens, &mut prog_cache, directory);
+    let mut parser = parse::Parser::new(tokens, &mut prog_cache, directory, true);
     let prog = parser.run(); 
 
     interpreter::execute_program(prog, None, parameters); 

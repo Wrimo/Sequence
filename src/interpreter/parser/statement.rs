@@ -6,6 +6,7 @@ use super::expr::{Expression, HistoryExpression};
 pub enum StatementType {
     NONE,
     PRINT,
+    TPRINT,
     REVEAL,
     ASSIGN,
     COPY,
@@ -36,17 +37,20 @@ pub struct Program {
     pub expect: Vec<Statement>,
     pub body: Vec<Statement>,
     pub parameters: Option<Vec<String>>,
+    pub top_level: bool,
     // TODO: add some new structure to hold taken histories
+    // is this done lol
 }
 
 impl Program {
-    pub fn new(name: String) -> Program {
+    pub fn new(name: String, top_level: bool) -> Program {
         Program {
             name: name,
             begin: None,
             expect: Vec::new(),
             body: Vec::new(),
             parameters: None,
+            top_level: top_level,
         }
     }
 

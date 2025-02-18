@@ -1,16 +1,40 @@
-// use std::collections::HashMap;
+#[cfg(test)]
+use std::process::{Command, Output};
 
-// use super::code_types::{Expression, VariableType};
-// use super::executor::calculate_expression;
+#[cfg(test)]
+fn assert_out(output: Output, expected: &str) {
+    assert_eq!(
+        String::from_utf8(output.stdout).unwrap(),
+        String::from(expected) + &String::from("\n"),
+    );
+}
 
-// #[test]
-// fn test_simple_add() {
-//     let x = Box::new(Expression::ADD(
-//         Box::new(Expression::INTEGER(2)),
-//         Box::new(Expression::INTEGER(2)),
-//     ));
-//     let m: HashMap<String, Vec<VariableType>> = HashMap::new(); 
-//     let y = calculate_expression(x, &m); 
+#[test]
+fn test_add_1_1() {
+    let output = Command::new("target/debug/sequence")
+        .args(["examples/add.sq", "{1}", "{1}"])
+        .output()
+        .unwrap();
 
-//     assert!(matches!(y, VariableType::INTEGER(4)));
-// }
+    assert_out(output, "2");
+}
+
+#[test]
+fn test_add_100_100() {
+    let output = Command::new("target/debug/sequence")
+        .args(["examples/add.sq", "{100}", "{100}"])
+        .output()
+        .unwrap();
+
+    assert_out(output, "200");
+}
+
+#[test]
+fn test_next_greater() {
+    let output = Command::new("target/debug/sequence")
+        .args(["examples/next_greater.sq", "{4, 5, 2, 4}", "{2}"])
+        .output()
+        .unwrap();
+
+    assert_out(output, "4");
+}
