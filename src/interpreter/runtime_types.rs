@@ -2,6 +2,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use super::interpreter;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum VariableType {
     FLOAT(f64),
@@ -53,6 +55,13 @@ impl VariableType {
         }
     }
 
+    pub fn require_history(&self) -> Option<SharedHistory> {
+        match self {
+            VariableType::History(x) => Some(x.clone()),
+            _ => None,
+        }
+    }
+
     pub fn abs(&mut self) -> Self {
         self.bool_to_number();
         match self {
@@ -91,6 +100,7 @@ impl History {
     pub fn alloc(_name: String, val: VariableType) -> SharedHistory {
         Rc::new(RefCell::new(History { items: vec![val] }))
     }
+
     pub fn add(&mut self, val: VariableType) {
         self.items.push(val);
     }
@@ -101,6 +111,10 @@ impl History {
 
     pub fn get_past(&self, index: usize) -> VariableType {
         self.items[index].clone()
+    }
+
+    pub fn get_most_recent(&self) -> VariableType {
+        self.get_past(self.len())
     }
 }
 

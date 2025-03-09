@@ -21,13 +21,15 @@ pub enum ExpressionType {
     EXPONENT,
     UMIN, 
     ABS,
-    HISTORY_EXPR(Box<HistoryExpression>),
+    PREV,
+    BINDER,
+    ACCESSOR,
     IDENTIFIER(String),
     BOOL(bool),
     INTEGER(i64),
     FLOAT(f64),
     STRING(String),
-    LEN(String),
+    LEN,
     NONE,
 }
 
@@ -57,31 +59,5 @@ impl PartialEq for ExpressionType {
 
     fn ne(&self, other: &Self) -> bool {
         std::mem::discriminant(self) != std::mem::discriminant(other)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum HistoryExpressionType {
-    PREV,
-    ALL(usize),
-    ACCESSOR,
-    SUBHISTORY(String),
-    IDENTIFIER(String)
-}
-
-#[derive(Clone, Debug)]
-pub struct HistoryExpression {
-    pub exp_type: HistoryExpressionType,
-    pub lhs: Option<Box<HistoryExpression>>,
-    pub rhs: Option<Box<HistoryExpression>>,
-}
-
-impl HistoryExpression {
-    pub fn new(exp_type: HistoryExpressionType, lhs: Option<Box<HistoryExpression>>, rhs: Option<Box<HistoryExpression>>) -> Box<HistoryExpression> {
-        Box::new(HistoryExpression { 
-            exp_type: exp_type, 
-            lhs: lhs, 
-            rhs: rhs, 
-        })
     }
 }

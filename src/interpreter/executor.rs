@@ -5,6 +5,7 @@ use super::parser;
 use super::parser::parse;
 use super::parser::statement::Program;
 use super::runtime_types::HistoryCollection;
+use crate::user_options::USER_OPTIONS;
 // this manages storing programs that correspond to specific files 
 // so they do have to be reevaluated each time the file is run
 
@@ -14,6 +15,8 @@ pub fn run_program(input: &str, directory: &PathBuf, parameters: Option<HistoryC
 
     let mut parser = parse::Parser::new(tokens, &mut prog_cache, directory, true);
     let prog = parser.run(); 
-
+     if USER_OPTIONS.lock().unwrap().debug {
+        println!("Finished parsing");
+    }
     interpreter::execute_program(prog, None, parameters); 
 }

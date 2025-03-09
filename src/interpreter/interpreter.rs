@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::parser::expr::{Expression, ExpressionType, HistoryExpression, HistoryExpressionType};
+use super::parser::expr::{Expression, ExpressionType};
 use super::parser::statement::{Program, Statement, StatementType};
 use super::runtime_types::{History, HistoryCollection, Memory, VariableType};
 use crate::interpreter::runtime_types::SharedHistory;
@@ -112,67 +112,34 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::IDENTIFIER(s) => {
             let history: SharedHistory = memory.get_history(s);
             let borrow = history.borrow();
-
-            borrow.get_past(borrow.len() - 1).force_scalar()
+            borrow.get_most_recent()
         }
 
-        ExpressionType::LEN(s) => {
-            VariableType::INTEGER(memory.get_history(s).borrow().len() as i64)
-        }
-
-        ExpressionType::HISTORY_EXPR(history_expr) => VariableType::History(evalulate_history_expression(memory, history_expr)),
-
-        _ => {
-            eprintln!("recevied bad expression type");
-            panic!();
-        }
-    }
-}
-
-fn evalulate_history_expression(memory: &mut Memory, expr: Box<HistoryExpression>) -> SharedHistory {
-    match expr.exp_type {
-        HistoryExpressionType::IDENTIFIER(s) => memory.get_or_create_history(s),
-
-        HistoryExpressionType::PREV => {
-            let history: SharedHistory = evalulate_history_expression(memory, expr.lhs.unwrap());
-            let borrowed = history.borrow();
-            let mut value: Option<VariableType> = None; 
-            
-            if borrowed.len() == 1 { 
-                value = Some(borrowed.get_past(0).clone()); // todo - expensive if past value is a history, expected here
-            } else {
-                value = Some(borrowed.get_past(borrowed.len() - 2).clone());
-            }
-
-            match value.clone().unwrap() {
-                VariableType::History(x) => x, 
-                _ => panic!("Value {:?} does not have a previous value", value.unwrap()),
+        ExpressionType::LEN => {
+            let x = calculate_expression(lhs.unwrap(), memory);
+            x.require_history();
+            match x {
+                VariableType::History(x) => VariableType::INTEGER(x.borrow().len() as i64),
+                _ => panic!("Cannot get the length of a non-History value"),
             }
         }
 
-        // ExpressionType::ACCESSOR => {
-        //     let name = expr.var_name.unwrap();
-        //     let var_history: History = memory.get_history(name).borrow().clone(); // todo - want to avoid this type of copy
 
-        //     if !matches!(lhs, None) {
-        //         // could clean this up with a simpler way to get values out of VariableType
-        //         if let VariableType::INTEGER(x) =
-        //             calculate_expression(lhs.unwrap(), memory).convert_int()
-        //         {
-        //             return var_history.get_past(x as usize).clone();
-        //         }
-        //     } else if !matches!(rhs, None) {
-        //         if let VariableType::INTEGER(x) =
-        //             calculate_expression(rhs.unwrap(), memory).convert_int()
-        //         {
-        //             return var_history
-        //                 .get_past(var_history.len() - 1 - (x as usize))
-        //                 .clone();
-        //         }
-        //     }
-        //     return VariableType::INTEGER(0);
-        // }
-        _ => panic!(),
+       ExpressionType::PREV => {
+            let val: VariableType = calculate_expression(lhs.unwrap(), memory);
+            let history: Option<SharedHistory> = val.require_history();
+
+            match history {
+                Some(x) => {
+                    let borrow = x.borrow();
+                    borrow.get_past(borrow.len() - 2)
+                }
+
+                _ => panic!("Cannot get the previous value of a non-History value"),
+            }  
+        }
+
+        _ => panic!("Impossible operator (how did you find this?)"),
     }
 }
 
@@ -205,16 +172,19 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
         match statement.statement_type.clone() {
             // TODO: split statement execution into different function
             StatementType::ASSIGN => {
-                let val = calculate_expression(statement.expr.clone().unwrap(), memory);
-                let history: SharedHistory = evalulate_history_expression(memory, statement.history_expr.clone().unwrap());
-                history.borrow_mut().add(val);
+                let val = calculate_expression(statement.expr.clone().unwrap(), memory); // TODO: figure out how to get rid of these clones
+                let history: VariableType = calculate_expression(statement.destin_expr.clone().unwrap(), memory);
+                if let VariableType::History(x) = history {
+                    return x.borrow_mut().add(val);
+                }
+                panic!(); 
             }
 
             StatementType::COPY => {
-                let destination = statement.var_name.as_ref().unwrap().to_string();
-                let source = statement.alt_var_name.as_ref().unwrap().to_string();
-
-                memory.copy(source, destination);
+                // let destination = statement.var_name.as_ref().unwrap().to_string();
+                // let source = statement.alt_var_name.as_ref().unwrap().to_string();
+                panic!("Copy statement is not implemented")
+                // memory.copy(source, destination);
             }
 
             StatementType::PRINT => {
@@ -268,10 +238,12 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
             }
 
             StatementType::REVEAL => {
-                let var_history: SharedHistory =
-                    memory.get_history(statement.var_name.clone().unwrap());
-                print!("{}: ", statement.var_name.clone().unwrap());
-                print!("{}", get_printable_history(var_history));
+                let var_history: VariableType = calculate_expression(statement.expr.clone().unwrap(), memory);
+                let history: Option<SharedHistory> = var_history.require_history();
+                match history {
+                    Some(x) => print!("{}", get_printable_history(x)),
+                    _ => panic!("Cannot reveal a non-History value"),
+                }
                 println!();
             }
 
@@ -360,7 +332,11 @@ pub fn execute_program(
         for i in 0..program.expect.len() {
             if calculate_expression(program.expect[i].expr.clone().unwrap(), &mut memory).as_bool()
             {
-                run_statements(program, program.expect[i].code_block.as_ref().unwrap(), &mut memory);
+                run_statements(
+                    program,
+                    program.expect[i].code_block.as_ref().unwrap(),
+                    &mut memory,
+                );
                 break 'prog_loop;
             }
         }

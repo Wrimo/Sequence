@@ -4,7 +4,7 @@ use std::{fs, process};
 
 use crate::interpreter::runtime_types::History;
 
-use super::expr::{Expression, ExpressionType, HistoryExpression, HistoryExpressionType};
+use super::expr::{Expression, ExpressionType};
 use super::lexer::symbol_analysis;
 use super::parsing_types::{Token, TokenType};
 use super::statement::{Program, Statement, StatementType};
@@ -168,32 +168,6 @@ impl<'a> Parser<'a> {
         return code_block;
     }
 
-    fn history_expr(&mut self) -> Box<HistoryExpression> {
-        if self.accept(TokenType::PREV) {
-            return HistoryExpression::new(
-                HistoryExpressionType::PREV,
-                Some(self.history_expr_fact()),
-                None,
-            );
-        }
-
-        return self.history_expr_fact();
-    }
-
-    fn history_expr_fact(&mut self) -> Box<HistoryExpression> {
-        match self.next_token().token_type {
-            TokenType::IDENTIFIER(s) => HistoryExpression::new(HistoryExpressionType::IDENTIFIER(s), None, None),
-
-            TokenType::LPAREN => {
-                let exp = self.history_expr();
-                self.expect(TokenType::RPAREN);
-                exp
-            }
-
-            _ => panic!("bad token"),
-        }
-    }
-
     fn expr(&mut self) -> Box<Expression> {
         let mut lhs = self.expr_comp();
         while self.current_token.equals(TokenType::AND) || self.current_token.equals(TokenType::OR)
@@ -312,23 +286,19 @@ impl<'a> Parser<'a> {
         } else if self.accept(TokenType::VERTICALBAR) {
             return Expression::new(ExpressionType::ABS, Some(self.factor()), None);
         } else if self.accept(TokenType::LEN) {
-            let name: Option<String> = self.expect_identifier();
-            return Expression::new(ExpressionType::LEN(name.unwrap()), None, None);
+            return Expression::new(ExpressionType::LEN, Some(self.expr()), None);
+        } else if self.accept(TokenType::PREV) {
+            return Expression::new(ExpressionType::PREV, Some(self.expr()), None)
         }
         return self.accessor_factor();
     }
 
     fn accessor_factor(&mut self) -> Box<Expression> {
-        let mut ident: Option<String> = None;
-        let mut lhs: Option<Box<Expression>> = None;
-        let mut rhs: Option<Box<Expression>> = None;
-        if self.accept(TokenType::DOLLAR) {
-            ident = self.expect_identifier();
-        } else {
-            lhs = Some(self.factor());
-        }
+        let lhs: Box<Expression> = self.expr();
+        self.expect(TokenType::ACCESSOR);
+        let rhs: Box<Expression> = self.expr();
 
-        return lhs.unwrap();
+        return Expression::new(ExpressionType::ACCESSOR, Some(lhs), Some(rhs));
     }
 
     fn factor(&mut self) -> Box<Expression> {
@@ -348,9 +318,9 @@ impl<'a> Parser<'a> {
             }
 
             TokenType::LSQUAREBRACKET => {
-                let history_exp = self.history_expr();
+                let history_exp = self.expr();
                 self.expect(TokenType::RSQUAREBRACKET);
-                return Expression::new(ExpressionType::HISTORY_EXPR(history_exp), None, None);
+                return Expression::new(ExpressionType::BINDER, Some(history_exp), None);
             }
 
             _ => {
@@ -386,6 +356,8 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) {
         self.stat.reset();
+        
+        println!("Parsing statement");
         if self
             .current_token
             .equals(TokenType::IDENTIFIER(String::from("")))
@@ -416,15 +388,16 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_stmt_assign(&mut self) {
+        println!("Parsing assignment");
         self.stat.set_type(StatementType::ASSIGN);
-        self.stat.history_expr = Some(self.history_expr());
+        self.stat.destin_expr = Some(self.expr());
         self.expect(TokenType::ASSIGNMENT);
         self.stat.expr = Some(self.expr());
     }
 
     fn parse_stmt_copy(&mut self) {
         self.stat.set_type(StatementType::COPY);
-        self.stat.var_name = self.expect_identifier();
+        self.stat.destin_expr = Some(self.expr());
         self.expect(TokenType::COPY);
         self.stat.alt_var_name = self.expect_identifier();
     }
@@ -435,6 +408,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_stmt_expect(&mut self) {
+        println!("Parsing expect");
         self.stat.set_type(StatementType::EXPECT);
         self.stat.expr = Some(self.expr());
         self.stat.code_block = Some(self.code_block())
@@ -442,7 +416,7 @@ impl<'a> Parser<'a> {
 
     fn parse_stmt_reveal(&mut self) {
         self.stat.set_type(StatementType::REVEAL);
-        self.stat.var_name = self.expect_identifier();
+        self.stat.expr = Some(self.expr());
     }
 
     fn parse_stmt_print(&mut self) {

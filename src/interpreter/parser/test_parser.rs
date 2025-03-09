@@ -45,7 +45,6 @@ fn test_simple_add() {
     let stat = prog.body[0].clone();
     println!("{:?}", stat);
     assert_eq!(stat.statement_type, StatementType::ASSIGN); 
-    assert_eq!(stat.sub, Some(String::from("a")));
 
     let lhs = Expression::new(ExpressionType::INTEGER(2), None, None);
     let rhs = Expression::new(ExpressionType::INTEGER(2), None, None);

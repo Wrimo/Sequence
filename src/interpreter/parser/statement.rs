@@ -1,6 +1,6 @@
 
 
-use super::expr::{Expression, HistoryExpression};
+use super::expr::{Expression};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum StatementType {
@@ -19,12 +19,11 @@ pub enum StatementType {
 #[derive(Clone, Debug)]
 pub struct Statement {
     pub statement_type: StatementType,
-    pub var_name: Option<String>,
     pub alt_var_name: Option<String>,
     pub var_list: Option<Vec<String>>,
     pub code_block: Option<Vec<Statement>>,
-    pub expr: Option<Box<Expression>>, // could make this interface for the different expression types
-    pub history_expr: Option<Box<HistoryExpression>>,
+    pub expr: Option<Box<Expression>>, 
+    pub destin_expr: Option<Box<Expression>>,
     pub alt_code_blocks: Vec<Vec<Statement>>,
     pub alt_exps: Vec<Box<Expression>>,
     pub sub_program: Option<Box<Program>>,
@@ -38,8 +37,6 @@ pub struct Program {
     pub body: Vec<Statement>,
     pub parameters: Option<Vec<String>>,
     pub top_level: bool,
-    // TODO: add some new structure to hold taken histories
-    // is this done lol
 }
 
 impl Program {
@@ -63,12 +60,11 @@ impl Statement {
     pub fn new() -> Statement {
         Statement {
             statement_type: StatementType::NONE,
-            var_name: None,
             alt_var_name: None,
             var_list: None,
             code_block: None,
             expr: None,
-            history_expr: None,
+            destin_expr: None,
             alt_code_blocks: Vec::new(),
             alt_exps: Vec::new(),
             sub_program: None,
@@ -79,8 +75,8 @@ impl Statement {
     }
     pub fn reset(&mut self) {
         self.statement_type = StatementType::NONE;
-        self.var_name = None;
         self.expr = None;
+        self.destin_expr = None;
         self.code_block = None;
         self.alt_code_blocks = Vec::new();
         self.alt_exps = Vec::new();
