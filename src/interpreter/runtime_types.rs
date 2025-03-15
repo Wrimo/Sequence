@@ -24,13 +24,13 @@ impl VariableType {
         }
     }
 
-    pub fn bool_to_number(&mut self) -> Self {
+    pub fn to_number(&self) -> Self {
         // if is a bool, converts it to an integer for expression eval
         match self {
-            Self::BOOL(x) => *self = Self::INTEGER(if *x { 1 } else { 0 }),
-            _ => {}
+            Self::BOOL(x) => Self::INTEGER(if *x { 1 } else { 0 }),
+            Self::History(x) => x.borrow().get_most_recent(),
+            _ => self.clone(),
         }
-        self.clone()
     }
 
     pub fn negate(&self) -> Self {
@@ -51,7 +51,7 @@ impl VariableType {
     pub fn force_scalar(&self) -> Self {
         match self {
             Self::History(_) => panic!("Tried to get a history value in a scalar context."),
-            _ => self.clone()
+            _ => self.clone(),
         }
     }
 
@@ -62,8 +62,15 @@ impl VariableType {
         }
     }
 
+    pub fn get_last_if_history(&self) -> VariableType {
+        match self {
+            VariableType::History(x) => x.borrow().get_most_recent(),
+            _ => self.clone(),
+        }
+    }
+
     pub fn abs(&mut self) -> Self {
-        self.bool_to_number();
+        self.to_number();
         match self {
             VariableType::FLOAT(x) => {
                 if *x < 0.0 {
@@ -97,7 +104,7 @@ impl History {
         History { items: vec![] }
     }
 
-    pub fn alloc(_name: String, val: VariableType) -> SharedHistory {
+    pub fn alloc(val: VariableType) -> SharedHistory {
         Rc::new(RefCell::new(History { items: vec![val] }))
     }
 
@@ -114,7 +121,7 @@ impl History {
     }
 
     pub fn get_most_recent(&self) -> VariableType {
-        self.get_past(self.len())
+        self.get_past(self.len() - 1)
     }
 }
 
@@ -135,7 +142,10 @@ impl Memory {
 
     pub fn get_or_create_history(&mut self, name: String) -> SharedHistory {
         if !self.cells.contains_key(&name) {
-            self.insert_history(name.clone(), Rc::new(RefCell::new(History { items: Vec::new() }))); // TODo - should make this apart of the History alloc
+            self.insert_history(
+                name.clone(),
+                Rc::new(RefCell::new(History { items: Vec::new() })),
+            ); // TODo - should make this apart of the History alloc
         }
 
         return self.get_history(name);
@@ -145,7 +155,7 @@ impl Memory {
         self.cells
             .entry(name.clone())
             .and_modify(|ent| (**ent).borrow_mut().add(value.clone())) // (*ent).borrow_mut().add(value.clone()))
-            .or_insert(History::alloc(name, value));
+            .or_insert(History::alloc(value));
     }
 
     pub fn insert_history(&mut self, name: String, history: Rc<RefCell<History>>) {

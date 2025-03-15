@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
         tokens: Vec<Token>,
         prog_cache: &'a mut HashMap<String, Box<Program>>,
         file_path: &'a PathBuf,
-        top_level: bool
+        top_level: bool,
     ) -> Parser<'a> {
         let mut directory = file_path.clone();
         let mut tokens = tokens.clone(); // TODO: don't make the parse require a newline at the end
@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
         return &self.prog;
     }
 
-    fn error_missing_token(&self, t: TokenType,) {
+    fn error_missing_token(&self, t: TokenType) {
         // TODO: i should make a more general fail function here that can be called by the switch statements
         eprintln!(
             "line {}: expected {:?} got {:?}",
@@ -288,9 +288,9 @@ impl<'a> Parser<'a> {
         } else if self.accept(TokenType::LEN) {
             return Expression::new(ExpressionType::LEN, Some(self.expr()), None);
         } else if self.accept(TokenType::PREV) {
-            return Expression::new(ExpressionType::PREV, Some(self.expr()), None)
+            return Expression::new(ExpressionType::PREV, Some(self.expr()), None);
         }
-        return self.accessor_factor();
+        return self.factor();
     }
 
     fn accessor_factor(&mut self) -> Box<Expression> {
@@ -319,8 +319,9 @@ impl<'a> Parser<'a> {
 
             TokenType::LSQUAREBRACKET => {
                 let history_exp = self.expr();
+                let exp = Expression::new(ExpressionType::BINDER, Some(history_exp), None);
                 self.expect(TokenType::RSQUAREBRACKET);
-                return Expression::new(ExpressionType::BINDER, Some(history_exp), None);
+                return exp;
             }
 
             _ => {
@@ -356,8 +357,7 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) {
         self.stat.reset();
-        
-        println!("Parsing statement");
+
         if self
             .current_token
             .equals(TokenType::IDENTIFIER(String::from("")))
@@ -388,7 +388,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_stmt_assign(&mut self) {
-        println!("Parsing assignment");
         self.stat.set_type(StatementType::ASSIGN);
         self.stat.destin_expr = Some(self.expr());
         self.expect(TokenType::ASSIGNMENT);
@@ -408,7 +407,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_stmt_expect(&mut self) {
-        println!("Parsing expect");
         self.stat.set_type(StatementType::EXPECT);
         self.stat.expr = Some(self.expr());
         self.stat.code_block = Some(self.code_block())
@@ -434,14 +432,15 @@ impl<'a> Parser<'a> {
 
         if self.accept(TokenType::RPAREN) {
             // no given expression; print()
-            self.stat.expr = Some(Expression::new(ExpressionType::NONE, None, None));
+            self.stat.alt_exps.push(Expression::new(ExpressionType::NONE, None, None));
             return;
         }
-        self.stat.expr = Some(self.expr());
-
-        while self.accept(TokenType::COMMA) {
+        loop {
             let expr = self.expr();
             self.stat.alt_exps.push(expr);
+            if !self.accept(TokenType::COMMA) {
+                break;
+            }
         }
 
         self.expect(TokenType::RPAREN);

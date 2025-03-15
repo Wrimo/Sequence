@@ -9,7 +9,7 @@ use crate::user_options::USER_OPTIONS;
 
 macro_rules! perform_arth_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x.unwrap(), $memory).bool_to_number(), &calculate_expression($y.unwrap(), $memory).bool_to_number()) {
+        match (&calculate_expression($x.unwrap(), $memory).to_number(), &calculate_expression($y.unwrap(), $memory).to_number()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::INTEGER((*x $op *y) as i64),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::FLOAT((*x $op *y)  as f64),
             (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::FLOAT(*x $op (*y as f64) as f64),
@@ -25,7 +25,7 @@ macro_rules! perform_arth_op {
 
 macro_rules! perform_comp_op {
     ($x:ident, $y:ident, $memory:ident, $op:tt) => {
-        match (&calculate_expression($x.unwrap(), $memory).bool_to_number(), &calculate_expression($y.unwrap(), $memory).bool_to_number()) {
+        match (&calculate_expression($x.unwrap(), $memory).to_number(), &calculate_expression($y.unwrap(), $memory).to_number()) {
             (VariableType::INTEGER(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::FLOAT(y)) => VariableType::BOOL(*x $op *y),
             (VariableType::FLOAT(x), VariableType::INTEGER(y)) => VariableType::BOOL(*x $op (*y as f64)),
@@ -81,8 +81,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         }
 
         ExpressionType::EXPONENT => {
-            let x = calculate_expression(lhs.unwrap(), memory).bool_to_number();
-            let y = calculate_expression(rhs.unwrap(), memory).bool_to_number();
+            let x = calculate_expression(lhs.unwrap(), memory).to_number();
+            let y = calculate_expression(rhs.unwrap(), memory).to_number();
 
             match (x, y) {
                 (VariableType::FLOAT(x), VariableType::FLOAT(y)) => {
@@ -110,20 +110,23 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::STRING(x) => VariableType::STRING(x),
 
         ExpressionType::IDENTIFIER(s) => {
-            let history: SharedHistory = memory.get_history(s);
-            let borrow = history.borrow();
-            borrow.get_most_recent()
+            let history: SharedHistory = memory.get_or_create_history(s);
+            VariableType::History(history)
+        }
+
+        ExpressionType::BINDER => {
+            let inner = calculate_expression(lhs.unwrap(), memory);
+            VariableType::History(History::alloc(inner))
         }
 
         ExpressionType::LEN => {
-            let x = calculate_expression(lhs.unwrap(), memory);
+            let x = calculate_expression(lhs.unwrap(), memory).get_last_if_history();
             x.require_history();
             match x {
                 VariableType::History(x) => VariableType::INTEGER(x.borrow().len() as i64),
                 _ => panic!("Cannot get the length of a non-History value"),
             }
         }
-
 
        ExpressionType::PREV => {
             let val: VariableType = calculate_expression(lhs.unwrap(), memory);
@@ -136,7 +139,7 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
                 }
 
                 _ => panic!("Cannot get the previous value of a non-History value"),
-            }  
+            }
         }
 
         _ => panic!("Impossible operator (how did you find this?)"),
@@ -172,12 +175,17 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
         match statement.statement_type.clone() {
             // TODO: split statement execution into different function
             StatementType::ASSIGN => {
-                let val = calculate_expression(statement.expr.clone().unwrap(), memory); // TODO: figure out how to get rid of these clones
+                let new_value = calculate_expression(statement.expr.clone().unwrap(), memory); // TODO: figure out how to get rid of these clones
                 let history: VariableType = calculate_expression(statement.destin_expr.clone().unwrap(), memory);
-                if let VariableType::History(x) = history {
-                    return x.borrow_mut().add(val);
+                if let VariableType::History(destin) = history {
+                    if let VariableType::History(source) = new_value {
+                        destin.borrow_mut().add(source.borrow().get_most_recent());
+                    } else {
+                        destin.borrow_mut().add(new_value);
+                    }
+                } else {
+                    panic!("Tried to assign a new value to a constant value!");
                 }
-                panic!(); 
             }
 
             StatementType::COPY => {
@@ -188,18 +196,9 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
             }
 
             StatementType::PRINT => {
-                let exp = statement.expr.as_ref().unwrap();
-                if matches!(exp.exp_type, ExpressionType::NONE) {
-                    println!("");
-                    continue;
-                }
-
-                // todo - could get rid of this is if i moved the first expr to the same list as the others
-                let x = calculate_expression(statement.expr.clone().unwrap(), memory);
-                println!("{}", get_printable_value(&x));
-
                 for i in 0..statement.alt_exps.len() {
-                    let x = calculate_expression(statement.alt_exps[i].clone(), memory);
+                    let x = calculate_expression(statement.alt_exps[i].clone(), memory)
+                                            .get_last_if_history();
                     println!("{}", get_printable_value(&x));
                 }
             }
@@ -208,19 +207,13 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
                 if !program.top_level {
                     continue;
                 }
-                let exp = statement.expr.as_ref().unwrap(); // TODO: copied from print for now, will clean up executor later
-                if matches!(exp.exp_type, ExpressionType::NONE) {
-                    println!("");
-                    continue;
-                }
-                let x = calculate_expression(statement.expr.clone().unwrap(), memory);
-                println!("{}", get_printable_value(&x));
-
                 for i in 0..statement.alt_exps.len() {
-                    let x = calculate_expression(statement.alt_exps[i].clone(), memory);
+                    let x = calculate_expression(statement.alt_exps[i].clone(), memory)
+                                            .get_last_if_history();
                     println!("{}", get_printable_value(&x));
                 }
-            }
+
+           }
 
             StatementType::IF => {
                 if calculate_expression(statement.expr.clone().unwrap(), memory).as_bool() {

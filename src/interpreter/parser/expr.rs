@@ -19,7 +19,7 @@ pub enum ExpressionType {
     NOT,
     FACTORIAL,
     EXPONENT,
-    UMIN, 
+    UMIN,
     ABS,
     PREV,
     BINDER,
@@ -34,19 +34,19 @@ pub enum ExpressionType {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Expression { 
-    pub exp_type: ExpressionType, 
-    pub lhs: Option<Box<Expression>>, 
-    pub rhs: Option<Box<Expression>>, 
+pub struct Expression {
+    pub exp_type: ExpressionType,
+    pub lhs: Option<Box<Expression>>,
+    pub rhs: Option<Box<Expression>>,
     pub var_name: Option<String>, // used to disambiguate accessor operator
 }
 
-impl Expression { 
-    pub fn new(epx_type: ExpressionType, lhs: Option<Box<Expression>>, rhs: Option<Box<Expression>>) -> Box<Expression> { 
-        Box::new(Expression { 
-            exp_type: epx_type, 
-            lhs: lhs, 
-            rhs: rhs, 
+impl Expression {
+    pub fn new(epx_type: ExpressionType, lhs: Option<Box<Expression>>, rhs: Option<Box<Expression>>) -> Box<Expression> {
+        Box::new(Expression {
+            exp_type: epx_type,
+            lhs: lhs,
+            rhs: rhs,
             var_name: None,
         })
     }
