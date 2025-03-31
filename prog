@@ -2,26 +2,10 @@ expect true {
     a <- 1
     a <- 2
     a <- 3
-    
-    -- Show length and contents of a
-    print(#a)  -- Should print 3
+
+    print(a:0)
+    print(a:1)
+    print(a:3)
+
     reveal a   -- Should show [1, 2, 3]
-    
-    -- Create a new history b starting with 0
-    b <- 0
-    
-    -- Use [] to create a history containing a's current value
-    b <- [a]
-    
-    -- Print b to see what it contains
-    reveal b
-    
-    -- Modify the nested history
-    [b] <- 4
-    
-    -- Add another value to b
-    b <- 5
-    
-    -- Print final state
-    reveal b
 }

@@ -31,7 +31,7 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         ("!", TokenType::FACTORIAL),
         ("^", TokenType::EXPONENT),
         (",", TokenType::COMMA),
-        ("::", TokenType::ACCESSOR),
+        (":", TokenType::ACCESSOR),
         ("=:", TokenType::COPY),
         ("#", TokenType::LEN),
         ("--", TokenType::COMMENT),
@@ -99,10 +99,10 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
                 continue;
             }
             token.token_type = t.clone();
-        } 
-        else if chr == '\"' { 
+        }
+        else if chr == '\"' {
             let mut j = i + 1;
-            while j < input.len() && chars[j] != '\"' { 
+            while j < input.len() && chars[j] != '\"' {
                 j += 1;
             }
             token.token_type = TokenType::STRING(input[i+1..j].to_string());

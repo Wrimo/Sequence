@@ -120,8 +120,7 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         }
 
         ExpressionType::LEN => {
-            let x = calculate_expression(lhs.unwrap(), memory).get_last_if_history();
-            x.require_history();
+            let x = calculate_expression(lhs.unwrap(), memory);
             match x {
                 VariableType::History(x) => VariableType::INTEGER(x.borrow().len() as i64),
                 _ => panic!("Cannot get the length of a non-History value"),
@@ -139,6 +138,24 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
                 }
 
                 _ => panic!("Cannot get the previous value of a non-History value"),
+            }
+        }
+
+        ExpressionType::ACCESSOR => {
+            let val: VariableType = calculate_expression(lhs.unwrap(), memory);
+            let history: Option<SharedHistory> = val.require_history();
+            let index: VariableType = calculate_expression(rhs.unwrap(), memory).get_last_if_history();
+
+            if let Some(x) = history {
+                let borrow = x.borrow();
+
+                if let VariableType::INTEGER(i) = index {
+                    borrow.get_past(i as usize)
+                } else {
+                    panic!("Tried to index into a history using a non integer value");
+                }
+            } else {
+                panic!("Tried to access previous values of a non-History value");
             }
         }
 

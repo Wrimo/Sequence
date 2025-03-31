@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::{fs, process};
-
-use crate::interpreter::runtime_types::History;
-
 use super::expr::{Expression, ExpressionType};
 use super::lexer::symbol_analysis;
 use super::parsing_types::{Token, TokenType};
@@ -268,10 +265,19 @@ impl<'a> Parser<'a> {
     }
 
     fn expr_expo(&mut self) -> Box<Expression> {
-        let mut lhs = self.unary_fact();
+        let mut lhs = self.expr_access();
         while self.accept(TokenType::EXPONENT) {
-            let rhs = self.unary_fact();
+            let rhs = self.expr_access();
             lhs = Expression::new(ExpressionType::EXPONENT, Some(lhs), Some(rhs));
+        }
+        return lhs;
+    }
+
+    fn expr_access(&mut self) -> Box<Expression> {
+        let mut lhs = self.unary_fact();
+        while self.accept(TokenType::ACCESSOR) {
+            let rhs = self.unary_fact();
+            lhs = Expression::new(ExpressionType::ACCESSOR, Some(lhs), Some(rhs))
         }
         return lhs;
     }
@@ -291,14 +297,6 @@ impl<'a> Parser<'a> {
             return Expression::new(ExpressionType::PREV, Some(self.expr()), None);
         }
         return self.factor();
-    }
-
-    fn accessor_factor(&mut self) -> Box<Expression> {
-        let lhs: Box<Expression> = self.expr();
-        self.expect(TokenType::ACCESSOR);
-        let rhs: Box<Expression> = self.expr();
-
-        return Expression::new(ExpressionType::ACCESSOR, Some(lhs), Some(rhs));
     }
 
     fn factor(&mut self) -> Box<Expression> {

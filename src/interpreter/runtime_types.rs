@@ -2,8 +2,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use super::interpreter;
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum VariableType {
     FLOAT(f64),
@@ -46,13 +44,6 @@ impl VariableType {
             Self::History(_x) => panic!("Tried to convert History to int"),
         }
         self.clone()
-    }
-
-    pub fn force_scalar(&self) -> Self {
-        match self {
-            Self::History(_) => panic!("Tried to get a history value in a scalar context."),
-            _ => self.clone(),
-        }
     }
 
     pub fn require_history(&self) -> Option<SharedHistory> {
@@ -117,6 +108,9 @@ impl History {
     }
 
     pub fn get_past(&self, index: usize) -> VariableType {
+        if index >= self.len() {
+            panic!("Tried to get out of range value {} for history of length {}", index, self.len());
+        }
         self.items[index].clone()
     }
 
@@ -149,13 +143,6 @@ impl Memory {
         }
 
         return self.get_history(name);
-    }
-
-    pub fn update_history(&mut self, name: String, value: VariableType) {
-        self.cells
-            .entry(name.clone())
-            .and_modify(|ent| (**ent).borrow_mut().add(value.clone())) // (*ent).borrow_mut().add(value.clone()))
-            .or_insert(History::alloc(value));
     }
 
     pub fn insert_history(&mut self, name: String, history: Rc<RefCell<History>>) {

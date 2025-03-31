@@ -8,8 +8,8 @@ expect i == #a {
     tprint(max)
 }
 
-if (i::$a < current and i::$a > max)  {
-    current <- i::$a
+if (a:i < current and a:i > max)  {
+    current <- a:i
 }
 
 i <- i + 1
