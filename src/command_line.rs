@@ -1,11 +1,10 @@
-
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::{process};
 use crate::interpreter::parser::lexer::symbol_analysis;
 use crate::interpreter::parser::parsing_types::{Token, TokenType};
 use crate::interpreter::runtime_types::{History, HistoryCollection, SharedHistory, VariableType};
 use crate::user_options::USER_OPTIONS;
+use std::cell::RefCell;
+use std::process;
+use std::rc::Rc;
 
 pub struct ArgResult {
     pub file_name: String,
@@ -69,7 +68,6 @@ fn parse_history(tokens: Vec<Token>) -> SharedHistory {
         match &tokens[i].token_type {
             TokenType::FLOAT(x) => history.add(VariableType::FLOAT(*x)),
             TokenType::INTEGER(x) => history.add(VariableType::INTEGER(*x)),
-            TokenType::STRING(x) => history.add(VariableType::STRING(x.clone())),
 
             _ => panic!("bad token in parameter {:?}", tokens[i].token_type),
         };

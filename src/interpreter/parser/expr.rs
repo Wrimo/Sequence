@@ -25,6 +25,7 @@ pub enum ExpressionType {
     BOOL(bool),
     INTEGER(i64),
     FLOAT(f64),
+    CHAR(char),
     STRING(String),
     LEN,
     NONE,
@@ -39,7 +40,11 @@ pub struct Expression {
 }
 
 impl Expression {
-    pub fn new(epx_type: ExpressionType, lhs: Option<Box<Expression>>, rhs: Option<Box<Expression>>) -> Box<Expression> {
+    pub fn new(
+        epx_type: ExpressionType,
+        lhs: Option<Box<Expression>>,
+        rhs: Option<Box<Expression>>,
+    ) -> Box<Expression> {
         Box::new(Expression {
             exp_type: epx_type,
             lhs: lhs,

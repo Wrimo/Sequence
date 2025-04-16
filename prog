@@ -1,11 +1,16 @@
 expect true {
-    a <- 1
-    a <- 2
-    a <- 3
+    a <- 'h'
+    a <- 'e'
+    a <- 'l'
+    a <- 'l'
+    a <- 'o'
 
-    print(a:0)
-    print(a:1)
-    print(a:3)
+    a <- ' '
 
-    reveal a   -- Should show [1, 2, 3]
+    a <- 'w'
+    a <- 'o'
+    a <- 'r'
+    a <- 'l'
+    a <- 'd'
+    reveal a
 }

@@ -9,6 +9,7 @@ pub enum TokenType {
     INTEGER(i64),
     STRING(String),
     FLOAT(f64),
+    CHAR(char),
     TRUE,
     FALSE,
     ADDOP,

@@ -107,7 +107,7 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::INTEGER(x) => VariableType::INTEGER(x),
         ExpressionType::FLOAT(x) => VariableType::FLOAT(x),
         ExpressionType::BOOL(x) => VariableType::BOOL(x),
-        ExpressionType::STRING(x) => VariableType::STRING(x),
+        ExpressionType::CHAR(x) => VariableType::CHAR(x),
 
         ExpressionType::IDENTIFIER(s) => {
             let history: SharedHistory = memory.get_or_create_history(s);
@@ -127,7 +127,7 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
             }
         }
 
-       ExpressionType::PREV => {
+        ExpressionType::PREV => {
             let val: VariableType = calculate_expression(lhs.unwrap(), memory);
             let history: Option<SharedHistory> = val.require_history();
 
@@ -144,7 +144,8 @@ pub fn calculate_expression(expr: Box<Expression>, memory: &mut Memory) -> Varia
         ExpressionType::ACCESSOR => {
             let val: VariableType = calculate_expression(lhs.unwrap(), memory);
             let history: Option<SharedHistory> = val.require_history();
-            let index: VariableType = calculate_expression(rhs.unwrap(), memory).get_last_if_history();
+            let index: VariableType =
+                calculate_expression(rhs.unwrap(), memory).get_last_if_history();
 
             if let Some(x) = history {
                 let borrow = x.borrow();
@@ -178,7 +179,7 @@ fn get_printable_value(x: &VariableType) -> String {
         VariableType::BOOL(x) => format!("{}", x),
         VariableType::INTEGER(x) => format!("{}", x),
         VariableType::FLOAT(x) => format!("{}", x),
-        VariableType::STRING(x) => format!("{}", x),
+        VariableType::CHAR(x) => format!("{}", x),
         VariableType::History(x) => get_printable_history(x.clone()),
     }
 }
@@ -193,7 +194,8 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
             // TODO: split statement execution into different function
             StatementType::ASSIGN => {
                 let new_value = calculate_expression(statement.expr.clone().unwrap(), memory); // TODO: figure out how to get rid of these clones
-                let history: VariableType = calculate_expression(statement.destin_expr.clone().unwrap(), memory);
+                let history: VariableType =
+                    calculate_expression(statement.destin_expr.clone().unwrap(), memory);
                 if let VariableType::History(destin) = history {
                     if let VariableType::History(source) = new_value {
                         destin.borrow_mut().add(source.borrow().get_most_recent());
@@ -215,7 +217,7 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
             StatementType::PRINT => {
                 for i in 0..statement.alt_exps.len() {
                     let x = calculate_expression(statement.alt_exps[i].clone(), memory)
-                                            .get_last_if_history();
+                        .get_last_if_history();
                     println!("{}", get_printable_value(&x));
                 }
             }
@@ -226,11 +228,10 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
                 }
                 for i in 0..statement.alt_exps.len() {
                     let x = calculate_expression(statement.alt_exps[i].clone(), memory)
-                                            .get_last_if_history();
+                        .get_last_if_history();
                     println!("{}", get_printable_value(&x));
                 }
-
-           }
+            }
 
             StatementType::IF => {
                 if calculate_expression(statement.expr.clone().unwrap(), memory).as_bool() {
@@ -248,7 +249,8 @@ fn run_statements(program: &Program, statements: &Vec<Statement>, memory: &mut M
             }
 
             StatementType::REVEAL => {
-                let var_history: VariableType = calculate_expression(statement.expr.clone().unwrap(), memory);
+                let var_history: VariableType =
+                    calculate_expression(statement.expr.clone().unwrap(), memory);
                 let history: Option<SharedHistory> = var_history.require_history();
                 match history {
                     Some(x) => print!("{}", get_printable_history(x)),

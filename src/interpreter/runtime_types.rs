@@ -7,7 +7,7 @@ pub enum VariableType {
     FLOAT(f64),
     INTEGER(i64),
     BOOL(bool),
-    STRING(String),
+    CHAR(char),
     History(SharedHistory),
 }
 
@@ -17,7 +17,7 @@ impl VariableType {
             Self::FLOAT(x) => *x >= 1.0,
             Self::INTEGER(x) => *x >= 1,
             Self::BOOL(x) => *x,
-            Self::STRING(x) => *x != "".to_string(),
+            Self::CHAR(_) => true,
             Self::History(x) => x.borrow_mut().items.len() != 0,
         }
     }
@@ -40,7 +40,7 @@ impl VariableType {
             Self::BOOL(x) => *self = Self::INTEGER(*x as i64),
             Self::FLOAT(x) => *self = Self::INTEGER(*x as i64),
             Self::INTEGER(_x) => {}
-            Self::STRING(_x) => panic!("Tried to convert String to int"),
+            Self::CHAR(_x) => panic!("Tried to convert Char to int"),
             Self::History(_x) => panic!("Tried to convert History to int"),
         }
         self.clone()
@@ -109,7 +109,11 @@ impl History {
 
     pub fn get_past(&self, index: usize) -> VariableType {
         if index >= self.len() {
-            panic!("Tried to get out of range value {} for history of length {}", index, self.len());
+            panic!(
+                "Tried to get out of range value {} for history of length {}",
+                index,
+                self.len()
+            );
         }
         self.items[index].clone()
     }

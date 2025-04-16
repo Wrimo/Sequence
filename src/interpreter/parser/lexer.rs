@@ -82,7 +82,8 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
             token.token_type = TokenType::NEWLINE;
 
             let len = tokens.len();
-            if  len == 0 || tokens[len  - 1].token_type != TokenType::NEWLINE { // simplify \n \n \n to \n
+            if len == 0 || tokens[len - 1].token_type != TokenType::NEWLINE {
+                // simplify \n \n \n to \n
                 tokens.push(token);
             }
             continue;
@@ -90,7 +91,8 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
         // is_sym will handle incrementing `i`.
         if let Some(t) = is_sym(&mut i, max_symlen) {
             if *t == TokenType::COMMENT {
-                loop { // ignore rest of current line
+                loop {
+                    // ignore rest of current line
                     i += 1;
                     if i >= chars.len() || chars[i] == '\n' {
                         break;
@@ -99,16 +101,10 @@ pub fn symbol_analysis(input: &str) -> Option<Vec<Token>> {
                 continue;
             }
             token.token_type = t.clone();
-        }
-        else if chr == '\"' {
-            let mut j = i + 1;
-            while j < input.len() && chars[j] != '\"' {
-                j += 1;
-            }
-            token.token_type = TokenType::STRING(input[i+1..j].to_string());
-            i = j;
-        }
-        else if chr.is_alphabetic() || chr == '_' {
+        } else if chr == '\'' {
+            token.token_type = TokenType::CHAR(chars[i + 1]);
+            i += 2;
+        } else if chr.is_alphabetic() || chr == '_' {
             let mut j = i;
             while j < input.len() - 1 && (chars[j + 1].is_alphanumeric() || chars[j + 1] == '_') {
                 j += 1;

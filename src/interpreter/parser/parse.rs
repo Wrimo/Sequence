@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::{fs, process};
 use super::expr::{Expression, ExpressionType};
 use super::lexer::symbol_analysis;
 use super::parsing_types::{Token, TokenType};
 use super::statement::{Program, Statement, StatementType};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::{fs, process};
 
 pub struct Parser<'a> {
     current_token: Token,
@@ -305,6 +305,7 @@ impl<'a> Parser<'a> {
             TokenType::IDENTIFIER(s) => Expression::new(ExpressionType::IDENTIFIER(s), None, None),
             TokenType::INTEGER(x) => Expression::new(ExpressionType::INTEGER(x), None, None),
             TokenType::FLOAT(x) => Expression::new(ExpressionType::FLOAT(x), None, None),
+            TokenType::CHAR(x) => Expression::new(ExpressionType::CHAR(x), None, None),
             TokenType::TRUE => Expression::new(ExpressionType::BOOL(true), None, None),
             TokenType::FALSE => Expression::new(ExpressionType::BOOL(false), None, None),
             TokenType::STRING(x) => Expression::new(ExpressionType::STRING(x), None, None),
@@ -430,7 +431,9 @@ impl<'a> Parser<'a> {
 
         if self.accept(TokenType::RPAREN) {
             // no given expression; print()
-            self.stat.alt_exps.push(Expression::new(ExpressionType::NONE, None, None));
+            self.stat
+                .alt_exps
+                .push(Expression::new(ExpressionType::NONE, None, None));
             return;
         }
         loop {
